@@ -8,14 +8,15 @@ public class ReactiveTarget : MonoBehaviour
     private bool isDead = false;
 
     [Header("Death")]
-    [SerializeField] private float deathAnimDuration = 1f;
     [SerializeField] private GameObject explosionPrefab;
     [SerializeField] private float explosionDuration = 1f;
 
+    // Reset hit points from max (Inspector).
     void Start() {
         currentHitPoints = maxHitPoints;
     }
 
+    // Apply one hit; triggers death when HP reaches zero.
     public void ReactToHit() {
         if (isDead) return;
 
@@ -26,15 +27,25 @@ public class ReactiveTarget : MonoBehaviour
         }
     }
 
+    // Mark dead and run explosion teardown.
     void Die() {
         isDead = true;
         ExplodeAndDestroy();
     }
 
+    // Spawn explosion at mesh center (or root position) and remove this enemy.
     void ExplodeAndDestroy() {
-        Vector3 center = GetComponentInChildren<Renderer>().bounds.center;
-        GameObject explosion = Instantiate(explosionPrefab, center, transform.rotation);
-        Destroy(explosion, explosionDuration);
+        Vector3 center = transform.position;
+        Renderer rend = GetComponentInChildren<Renderer>();
+        if (rend != null) {
+            center = rend.bounds.center;
+        }
+
+        if (explosionPrefab != null) {
+            GameObject explosion = Instantiate(explosionPrefab, center, transform.rotation);
+            Destroy(explosion, explosionDuration);
+        }
+
         Destroy(gameObject);
     }
 }
