@@ -48,6 +48,7 @@ public class ZoneManager : MonoBehaviour
 
     // All cells in row-major order (row 0 col 0, row 0 col 1, …).
     private readonly List<Zone> zones = new List<Zone>();
+    
     // Current capture target and progress (0..1).
     private Zone activeCaptureZone;
     private float activeCaptureProgress;
@@ -105,20 +106,8 @@ public class ZoneManager : MonoBehaviour
         float captureRate = Mathf.Max(secondsToCapture, MinCaptureSeconds);
         float drainRate = Mathf.Max(secondsToDrain, MinCaptureSeconds);
 
-        UpdateCaptureProgress(playerZone, deltaTime, captureRate, drainRate);
-    }
-
-    // Applies per-frame capture/drain logic for the active zone only.
-    private void UpdateCaptureProgress(
-        Zone playerZone,
-        float deltaTime,
-        float captureSeconds,
-        float drainSeconds)
-    {
         if (playerZone == null) {
-            if (activeCaptureProgress <= 0f) return;
-
-            activeCaptureProgress = Mathf.Max(0f, activeCaptureProgress - (deltaTime / drainSeconds));
+            activeCaptureProgress = Mathf.Max(0f, activeCaptureProgress - (deltaTime / drainRate));
             if (activeCaptureProgress == 0f) {
                 activeCaptureZone = null;
             }
@@ -136,14 +125,12 @@ public class ZoneManager : MonoBehaviour
             activeCaptureProgress = 0f;
         }
 
-        activeCaptureProgress += deltaTime / captureSeconds;
-        if (activeCaptureProgress < 1f) {
-            return;
+        activeCaptureProgress += deltaTime / captureRate;
+        if (activeCaptureProgress >= 1f) {
+            playerZone.SetOwner(ZoneOwner.Player);
+            activeCaptureZone = null;
+            activeCaptureProgress = 0f;
         }
-
-        activeCaptureProgress = 0f;
-        activeCaptureZone.SetOwner(ZoneOwner.Player);
-        activeCaptureZone = null;
     }
 
     // Returns the first zone containing this world position, if any.

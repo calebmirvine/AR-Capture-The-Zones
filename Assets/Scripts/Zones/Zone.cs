@@ -31,30 +31,16 @@ public class Zone : MonoBehaviour
 
     // Creates a flat floor quad slightly above the plane.
     private void BuildFloorQuad() {
-        GameObject quadObject = new GameObject("FloorQuad");
+        GameObject quadObject = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        quadObject.name = "FloorQuad";
         quadObject.transform.SetParent(transform, false);
         quadObject.transform.localPosition = new Vector3(0f, 0.001f, 0f);
-        quadObject.transform.localRotation = Quaternion.identity;
+        quadObject.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+        quadObject.transform.localScale = new Vector3(halfSizeX * 2f, halfSizeZ * 2f, 1f);
 
-        Mesh mesh = new Mesh();
-        Vector3 v0 = new Vector3(-halfSizeX, 0f, -halfSizeZ);
-        Vector3 v1 = new Vector3(halfSizeX, 0f, -halfSizeZ);
-        Vector3 v2 = new Vector3(halfSizeX, 0f, halfSizeZ);
-        Vector3 v3 = new Vector3(-halfSizeX, 0f, halfSizeZ);
+        // Destroy(quadObject.GetComponent<Collider>());
 
-        mesh.vertices = new Vector3[] { v0, v1, v2, v3 };
-        mesh.triangles = new int[] { 0, 2, 1, 0, 3, 2 };
-        mesh.uv = new Vector2[] {
-            new Vector2(0f, 0f),
-            new Vector2(1f, 0f),
-            new Vector2(1f, 1f),
-            new Vector2(0f, 1f)
-        };
-
-        MeshFilter meshFilter = quadObject.AddComponent<MeshFilter>();
-        meshFilter.mesh = mesh;
-
-        floorQuadRenderer = quadObject.AddComponent<MeshRenderer>();
+        floorQuadRenderer = quadObject.GetComponent<MeshRenderer>();
         floorQuadRenderer.material = zoneManager.GetFloorMaterial(ZoneManager.ZoneOwner.Neutral);
     }
 
@@ -78,7 +64,9 @@ public class Zone : MonoBehaviour
 
         GameObject flagPrefab = zoneManager.GetFlagPrefab(owner);
         activeFlagObject = Instantiate(flagPrefab, transform);
+        // Flag is 5cm above the floor.
         activeFlagObject.transform.localPosition = new Vector3(0f, 0.05f, 0f);
+        // Flag is not rotated.
         activeFlagObject.transform.localRotation = Quaternion.identity;
     }
 
