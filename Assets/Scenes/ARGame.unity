@@ -804,7 +804,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1714939352}
   - component: {fileID: 1714939351}
-  - component: {fileID: 1714939353}
   m_Layer: 0
   m_Name: ZoneManager
   m_TagString: Untagged
@@ -827,7 +826,6 @@ MonoBehaviour:
   mainCameraTransform: {fileID: 2512387468973847774}
   columns: 2
   rows: 2
-  navMeshSurface: {fileID: 1714939353}
   floorMaterialPlayer: {fileID: 2100000, guid: 0bb403004f836450ba501ae1ead61776, type: 2}
   floorMaterialEnemy: {fileID: 2100000, guid: 0da86cb71d67e41e49bfda21268784dd, type: 2}
   floorMaterialNeutral: {fileID: 2100000, guid: cdaf2806ba0ce4403ad289996f6743dc, type: 2}
@@ -837,6 +835,7 @@ MonoBehaviour:
   flagMaterialNeutral: {fileID: 2100000, guid: f0df5b8674cc84bce8f091f8e35d9bcb, type: 2}
   flagMaterialContested: {fileID: 2100000, guid: 2973b8d7e09ee4e2e9ce837ec531154d, type: 2}
   flagPrefab: {fileID: 6000222668779499523, guid: a5470cdad1b344c2cabbc2ef05a16cc6, type: 3}
+  applyPlayerFlagSurfaceColorToAllFlagRenderers: 1
   lineWidth: 0.05
   lineColor: {r: 1, g: 0.5490196, b: 0, a: 1}
   secondsToCapture: 3
@@ -856,38 +855,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1714939353
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1714939350}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7a5ac11cc976e418e8d13136b07e1f52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.AI.Navigation::Unity.AI.Navigation.NavMeshSurface
-  m_SerializedVersion: 0
-  m_AgentTypeID: 0
-  m_CollectObjects: 0
-  m_Size: {x: 10, y: 10, z: 10}
-  m_Center: {x: 0, y: 2, z: 0}
-  m_LayerMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_UseGeometry: 0
-  m_DefaultArea: 0
-  m_GenerateLinks: 0
-  m_IgnoreNavMeshAgent: 1
-  m_IgnoreNavMeshObstacle: 1
-  m_OverrideTileSize: 0
-  m_TileSize: 256
-  m_OverrideVoxelSize: 0
-  m_VoxelSize: 0.16666667
-  m_MinRegionArea: 2
-  m_NavMeshData: {fileID: 0}
-  m_BuildHeightMesh: 0
 --- !u!4 &1765540924 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6605111590819766859, guid: 39844bfe7d2744705b9f4f826165c89b, type: 3}
@@ -925,8 +892,6 @@ MonoBehaviour:
   arPlaneManager: {fileID: 2512387470422636671}
   zoneManager: {fileID: 1714939351}
   confirmButton: {fileID: 1474687989}
-  enemyPrefab: {fileID: 8835523534610127516, guid: 41052a428a38f4ef1bc46f497e197a82, type: 3}
-  enemyCount: 1
   minimumPlaneArea: 3
 --- !u!4 &1951880154
 Transform:
@@ -975,7 +940,6 @@ MonoBehaviour:
   arCamera: {fileID: 2512387468973847775}
   projectilePrefab: {fileID: 3511005373582648888, guid: 02d527f2d6baf48f3882a75b3d8046e7, type: 3}
   projectileSpeed: 10
-  projectileLifetime: 3
 --- !u!4 &2129467096
 Transform:
   m_ObjectHideFlags: 0
@@ -1349,8 +1313,6 @@ MonoBehaviour:
   arPlaneManager: {fileID: 2512387470422636671}
   zoneManager: {fileID: 1714939351}
   confirmButton: {fileID: 1474687989}
-  enemyPrefab: {fileID: 0}
-  enemyCount: 1
   minimumPlaneArea: 1
 --- !u!4 &2512387470860572925
 Transform:
@@ -1461,5 +1423,5 @@ SceneRoots:
   - {fileID: 2129467096}
   - {fileID: 988968035}
   - {fileID: 550943171}
-  - {fileID: 1951880154}
   - {fileID: 1714939352}
+  - {fileID: 1951880154}

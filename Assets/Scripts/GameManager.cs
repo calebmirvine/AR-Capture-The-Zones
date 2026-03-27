@@ -1,6 +1,4 @@
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.AI;
 using UnityEngine.UI;
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
@@ -19,22 +17,17 @@ public class GameManager : MonoBehaviour
     [SerializeField]
     private Button confirmButton;
 
-    [Header("Enemies (after zones + NavMesh bake)")]
-    [SerializeField]
-    private GameObject enemyPrefab;
-
-    [SerializeField]
-    private int enemyCount = 1;
-
     [Header("Plane size")]
+    [Tooltip("Minimum floor area in square meters before Confirm is allowed.")]
     [SerializeField]
     private float minimumPlaneArea = 1f;
 
+    // Largest horizontal plane seen this frame (used for Confirm and for zone bounds).
     private ARPlane largestPlane;
     private float largestPlaneArea;
 
-    // Wire confirm listener; hide button until a plane is large enough.
     private void Start() {
+        // Hide Confirm until the floor is large enough (see Update).
         confirmButton.gameObject.SetActive(false);
         confirmButton.onClick.AddListener(OnConfirmScan);
     }
@@ -48,14 +41,18 @@ public class GameManager : MonoBehaviour
         largestPlane = null;
         largestPlaneArea = 0f;
 
+        // Iterate over each plane and find the largest one.
         foreach (ARPlane plane in arPlaneManager.trackables) {
+            // Calculate the area of the plane.
             float area = plane.size.x * plane.size.y;
             if (area > largestPlaneArea) {
+                // Update the largest plane area and plane.
                 largestPlaneArea = area;
                 largestPlane = plane;
             }
         }
 
+        // Check if the largest plane meets the minimum area.
         bool meetsMinimum = false;
         if (largestPlane != null && largestPlaneArea >= minimumPlaneArea) {
             meetsMinimum = true;
@@ -78,6 +75,7 @@ public class GameManager : MonoBehaviour
             return;
         }
 
+        // Resolve plane here (same rules as Update) so we don't use a stale or null largestPlane.
         ARPlane planeToUse = null;
         float bestArea = 0f;
         foreach (ARPlane plane in arPlaneManager.trackables) {
@@ -88,51 +86,25 @@ public class GameManager : MonoBehaviour
             }
         }
 
+        // Check if the plane to use is null or if the area is less than the minimum area.
         if (planeToUse == null || bestArea < minimumPlaneArea) {
             return;
         }
         Transform planeTransform = planeToUse.transform;
         Vector2 planeSize = planeToUse.size;
 
+        // Disable the confirm button.
         confirmButton.gameObject.SetActive(false);
 
+        // Disable all planes.
         foreach (ARPlane plane in arPlaneManager.trackables) {
             plane.gameObject.SetActive(false);
         }
 
+        // Disable the plane manager.
         arPlaneManager.enabled = false;
 
+        // Generate the zones.
         zoneManager.GenerateZones(planeTransform, planeSize);
-        SpawnEnemiesInRandomZones();
-    }
-
-    // Instantiate enemies on NavMesh inside random zone cells (after GenerateZones).
-    void SpawnEnemiesInRandomZones() {
-        if (enemyPrefab == null || zoneManager == null) {
-            return;
-        }
-
-        List<Zone> zones = zoneManager.GetAllZones();
-        if (zones == null || zones.Count == 0) {
-            return;
-        }
-
-        int count = Mathf.Max(0, enemyCount);
-        for (int i = 0; i < count; i++) {
-            Zone zone = zones[Random.Range(0, zones.Count)];
-            Vector3 candidate = zone.GetRandomPointOnFloor();
-            const float sampleRadius = 2f;
-            if (!NavMesh.SamplePosition(candidate, out NavMeshHit hit, sampleRadius, NavMesh.AllAreas)) {
-                if (!NavMesh.SamplePosition(zone.transform.position, out hit, sampleRadius * 2f, NavMesh.AllAreas)) {
-                    continue;
-                }
-            }
-
-            GameObject enemy = Instantiate(enemyPrefab, hit.position, Quaternion.identity);
-            EnemyZonePatrol patrol = enemy.GetComponent<EnemyZonePatrol>();
-            if (patrol != null) {
-                patrol.Configure(zoneManager);
-            }
-        }
     }
 }

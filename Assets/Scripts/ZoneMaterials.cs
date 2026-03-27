@@ -13,29 +13,6 @@ public struct ZoneMaterials
     public Material flagNeutral;
     public Material flagContested;
 
-    public static ZoneMaterials FromInspector(
-        Material floorPlayer,
-        Material floorEnemy,
-        Material floorNeutral,
-        Material floorContested,
-        Material flagPlayer,
-        Material flagEnemy,
-        Material flagNeutral,
-        Material flagContested)
-    {
-        return new ZoneMaterials {
-            floorPlayer = floorPlayer,
-            floorEnemy = floorEnemy,
-            floorNeutral = floorNeutral,
-            floorContested = floorContested,
-            flagPlayer = flagPlayer,
-            flagEnemy = flagEnemy,
-            flagNeutral = flagNeutral,
-            flagContested = flagContested
-        };
-    }
-
-    // Floor tint material for the given zone owner.
     public Material GetFloor(ZoneOwner owner) {
         switch (owner) {
             case ZoneOwner.Player:    return floorPlayer;
@@ -45,7 +22,6 @@ public struct ZoneMaterials
         }
     }
 
-    // Flag material for the given zone owner.
     public Material GetFlag(ZoneOwner owner) {
         switch (owner) {
             case ZoneOwner.Player:    return flagPlayer;

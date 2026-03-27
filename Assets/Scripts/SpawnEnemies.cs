@@ -18,18 +18,15 @@ public class SpawnEnemies : MonoBehaviour
     private Transform spawnSurface;
     private Vector2 surfaceSize;
 
-    // Store the AR floor (or plane) transform and extent used for random spawn positions.
     public void SetSpawnSurface(Transform surface, Vector2 size) {
         spawnSurface = surface;
         surfaceSize = size;
     }
 
-    // Allow Update to start spawning enemies after scan / game phase is ready.
     public void StartSpawning() {
         isSpawning = true;
     }
 
-    // Tick spawn timer and spawn at interval while under max count.
     void Update() {
         if (!isSpawning) return;
 
@@ -40,10 +37,8 @@ public class SpawnEnemies : MonoBehaviour
         }
     }
 
-    // Place one enemy at a random point on the spawn surface in local XZ.
     void SpawnEnemy() {
         if (currentEnemies >= maxEnemies) return;
-        if (spawnSurface == null || enemyPrefab == null) return;
 
         float halfX = surfaceSize.x * 0.5f;
         float halfZ = surfaceSize.y * 0.5f;
