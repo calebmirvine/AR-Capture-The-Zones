@@ -5,35 +5,28 @@ public class Zone : MonoBehaviour
 {
     [SerializeField]
     [Tooltip("Who owns this tile right now.")]
-    private ZoneOwner owner;
+    private ZoneManager.ZoneOwner owner;
 
-    // Half-extents in local XZ (used for point-in-zone tests and mesh size).
     private float halfSizeX;
     private float halfSizeZ;
-
     private ZoneManager zoneManager;
     private MeshRenderer floorQuadRenderer;
     private GameObject activeFlagObject;
 
-    public ZoneOwner Owner {
+    public ZoneManager.ZoneOwner Owner {
         get { return owner; }
     }
 
     // Initializes this zone's geometry and flag visuals.
-    public void Setup(
-        float worldCellSizeX,
-        float worldCellSizeZ,
-        ZoneManager manager)
-    {
-        owner = ZoneOwner.Neutral;
+    public void Setup(float worldCellSizeX, float worldCellSizeZ, ZoneManager manager) {
+        owner = ZoneManager.ZoneOwner.Neutral;
         zoneManager = manager;
 
         halfSizeX = worldCellSizeX * 0.5f;
         halfSizeZ = worldCellSizeZ * 0.5f;
 
         BuildFloorQuad();
-
-        ApplyMaterialsForCurrentOwner();
+        ApplyVisualsForCurrentOwner();
     }
 
     // Creates a flat floor quad slightly above the plane.
@@ -62,17 +55,17 @@ public class Zone : MonoBehaviour
         meshFilter.mesh = mesh;
 
         floorQuadRenderer = quadObject.AddComponent<MeshRenderer>();
-        floorQuadRenderer.material = zoneManager.GetFloorMaterial(ZoneOwner.Neutral);
+        floorQuadRenderer.material = zoneManager.GetFloorMaterial(ZoneManager.ZoneOwner.Neutral);
     }
 
     // Sets the owner and updates floor/flag visuals.
-    public void SetOwner(ZoneOwner newOwner) {
+    public void SetOwner(ZoneManager.ZoneOwner newOwner) {
         owner = newOwner;
-        ApplyMaterialsForCurrentOwner();
+        ApplyVisualsForCurrentOwner();
     }
 
-    // Applies floor and flag materials based on current owner.
-    private void ApplyMaterialsForCurrentOwner() {
+    // Applies floor material and owner-specific flag prefab.
+    private void ApplyVisualsForCurrentOwner() {
         floorQuadRenderer.material = zoneManager.GetFloorMaterial(owner);
         ApplyFlagPrefabForCurrentOwner();
     }
@@ -81,7 +74,6 @@ public class Zone : MonoBehaviour
     private void ApplyFlagPrefabForCurrentOwner() {
         if (activeFlagObject != null) {
             Destroy(activeFlagObject);
-            activeFlagObject = null;
         }
 
         GameObject flagPrefab = zoneManager.GetFlagPrefab(owner);

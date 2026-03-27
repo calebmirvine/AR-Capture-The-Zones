@@ -8,7 +8,6 @@ public class ReactiveTarget : MonoBehaviour
     private bool isDead = false;
 
     [Header("Death")]
-    [SerializeField] private float deathAnimDuration = 1f;
     [SerializeField] private GameObject explosionPrefab;
     [SerializeField] private float explosionDuration = 1f;
 

@@ -44,9 +44,7 @@ public class GameManager : MonoBehaviour
     // User tapped Confirm: lock in the current plane and spawn zones on it.
     private void OnConfirmScan() {
         ARPlane planeToUse = GetLargestPlane();
-        if (planeToUse == null) {
-            return;
-        }
+        if (planeToUse == null) return;
 
         float largestArea = planeToUse.size.x * planeToUse.size.y;
         if (largestArea < minimumPlaneArea) return;
