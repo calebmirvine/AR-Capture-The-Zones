@@ -14,15 +14,16 @@ public class GameManager : MonoBehaviour
     private ZoneManager zoneManager;
 
     [SerializeField]
+    private SpawnManager spawnManager;
+
+    [SerializeField]
     private Button confirmButton;
 
-    [Header("Plane size")]
-    [Tooltip("Minimum floor area in square meters before Confirm is allowed.")]
+    [Header("Plane size - Minimum floor area in square meters before Confirm is allowed.")]
     [SerializeField]
     private float minimumPlaneArea = 1f;
 
     private void Start() {
-        // Hide Confirm until the floor is large enough.
         confirmButton.gameObject.SetActive(false);
         confirmButton.onClick.AddListener(OnConfirmScan);
     }
@@ -44,27 +45,24 @@ public class GameManager : MonoBehaviour
     // User tapped Confirm: lock in the current plane and spawn zones on it.
     private void OnConfirmScan() {
         ARPlane planeToUse = GetLargestPlane();
-        if (planeToUse == null) return;
 
         float largestArea = planeToUse.size.x * planeToUse.size.y;
-        if (largestArea < minimumPlaneArea) return;
 
         Transform planeTransform = planeToUse.transform;
         Vector2 planeSize = planeToUse.size;
 
-        // Disable the confirm button.
-        confirmButton.gameObject.SetActive(false);
 
-        // Disable all planes.
+        //Hide the confirm button and all planes.
+        confirmButton.gameObject.SetActive(false);
         foreach (ARPlane plane in arPlaneManager.trackables) {
             plane.gameObject.SetActive(false);
         }
-
-        // Disable the plane manager.
         arPlaneManager.enabled = false;
 
-        // Generate the zones.
+        //Build zones on the chosen plane.
         zoneManager.GenerateZones(planeTransform, planeSize);
+
+        spawnManager.SpawnEnemyInRandomZone();
     }
 
     // Returns the largest tracked AR plane, or null when none exist.

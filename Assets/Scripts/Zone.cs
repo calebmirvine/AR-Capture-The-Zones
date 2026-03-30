@@ -4,7 +4,6 @@ using UnityEngine;
 public class Zone : MonoBehaviour
 {
     [SerializeField]
-    [Tooltip("Who owns this tile right now.")]
     private ZoneManager.ZoneOwner owner;
 
     private float halfSizeX;
@@ -53,11 +52,8 @@ public class Zone : MonoBehaviour
     // Applies floor material and owner-specific flag prefab.
     private void ApplyVisualsForCurrentOwner() {
         floorQuadRenderer.material = zoneManager.GetFloorMaterial(owner);
-        ApplyFlagPrefabForCurrentOwner();
-    }
 
-    // Replaces the current flag object with this owner's prefab.
-    private void ApplyFlagPrefabForCurrentOwner() {
+        // Replaces the current flag object with this owner's prefab.
         if (activeFlagObject != null) {
             Destroy(activeFlagObject);
         }

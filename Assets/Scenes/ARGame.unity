@@ -626,53 +626,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1201845371
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1201845373}
-  - component: {fileID: 1201845372}
-  m_Layer: 0
-  m_Name: SpawnManager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 0
---- !u!114 &1201845372
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1201845371}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3eefdebb9446449c5bc5116e63dad2ae, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SpawnEnemies
-  enemyPrefab: {fileID: 8835523534610127516, guid: 41052a428a38f4ef1bc46f497e197a82, type: 3}
-  spawnInterval: 1
-  maxEnemies: 10
---- !u!4 &1201845373
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1201845371}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1474687987
 GameObject:
   m_ObjectHideFlags: 0
@@ -830,14 +783,10 @@ MonoBehaviour:
   floorMaterialEnemy: {fileID: 2100000, guid: 0da86cb71d67e41e49bfda21268784dd, type: 2}
   floorMaterialNeutral: {fileID: 2100000, guid: cdaf2806ba0ce4403ad289996f6743dc, type: 2}
   floorMaterialContested: {fileID: 2100000, guid: 5fa2b3482983044da94c7df4a6cc80f4, type: 2}
-  flagMaterialPlayer: {fileID: 2100000, guid: fcde8f0d1d5974e67bb9ca58ebcda736, type: 2}
-  flagMaterialEnemy: {fileID: 2100000, guid: d81b063ccbccd45f4ba73d9004a230b4, type: 2}
-  flagMaterialNeutral: {fileID: 2100000, guid: f0df5b8674cc84bce8f091f8e35d9bcb, type: 2}
-  flagMaterialContested: {fileID: 2100000, guid: 2973b8d7e09ee4e2e9ce837ec531154d, type: 2}
-  flagPrefab: {fileID: 6000222668779499523, guid: a5470cdad1b344c2cabbc2ef05a16cc6, type: 3}
-  applyPlayerFlagSurfaceColorToAllFlagRenderers: 1
-  lineWidth: 0.05
-  lineColor: {r: 1, g: 0.5490196, b: 0, a: 1}
+  flagPrefabNeutral: {fileID: 8159476798780534479, guid: d0d5156fe0cf74bc1beaf728ca8a5fb8, type: 3}
+  flagPrefabPlayer: {fileID: 4632929899598253275, guid: b44f512cd3dde44e1bc19871ec9fa61c, type: 3}
+  flagPrefabEnemy: {fileID: 6181948281431164187, guid: 554034c58158044ddb8b4bd1445a6d40, type: 3}
+  flagPrefabContested: {fileID: 1943822945330447383, guid: 01c1a61bea23f493388b78a547d577ea, type: 3}
   secondsToCapture: 3
   secondsToDrain: 2
 --- !u!4 &1714939352
@@ -1419,7 +1368,6 @@ SceneRoots:
   - {fileID: 2512387470422636640}
   - {fileID: 1167446573}
   - {fileID: 410087041}
-  - {fileID: 1201845373}
   - {fileID: 2129467096}
   - {fileID: 988968035}
   - {fileID: 550943171}
