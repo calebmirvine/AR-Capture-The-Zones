@@ -5,6 +5,11 @@ public class Zone : MonoBehaviour
 {
     [SerializeField]
     private ZoneManager.ZoneOwner owner;
+    // Public getter for the current owner.
+    public ZoneManager.ZoneOwner Owner {
+        get { return owner; }
+    }
+
 
     private float halfSizeX;
     private float halfSizeZ;
@@ -12,9 +17,6 @@ public class Zone : MonoBehaviour
     private MeshRenderer floorQuadRenderer;
     private GameObject activeFlagObject;
 
-    public ZoneManager.ZoneOwner Owner {
-        get { return owner; }
-    }
 
     // Initializes this zone's geometry and flag visuals.
     public void Setup(float worldCellSizeX, float worldCellSizeZ, ZoneManager manager) {
@@ -37,7 +39,9 @@ public class Zone : MonoBehaviour
         quadObject.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
         quadObject.transform.localScale = new Vector3(halfSizeX * 2f, halfSizeZ * 2f, 1f);
 
-        // Destroy(quadObject.GetComponent<Collider>());
+        // Keep the collider for NavMesh baking
+        Collider collider = quadObject.GetComponent<Collider>();
+        collider.isTrigger = false; // Ensure it's not a trigger so NavMesh can use it
 
         floorQuadRenderer = quadObject.GetComponent<MeshRenderer>();
         floorQuadRenderer.material = zoneManager.GetFloorMaterial(ZoneManager.ZoneOwner.Neutral);
