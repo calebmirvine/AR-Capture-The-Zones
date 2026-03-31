@@ -45,8 +45,10 @@ public class GameManager : MonoBehaviour
     // User tapped Confirm: lock in the current plane and spawn zones on it.
     private void OnConfirmScan() {
         ARPlane planeToUse = GetLargestPlane();
-
-        float largestArea = planeToUse.size.x * planeToUse.size.y;
+        if (planeToUse == null) {
+            Debug.LogWarning("Cannot confirm scan because no AR plane is available.");
+            return;
+        }
 
         Transform planeTransform = planeToUse.transform;
         Vector2 planeSize = planeToUse.size;
@@ -61,6 +63,7 @@ public class GameManager : MonoBehaviour
 
         //Build zones on the chosen plane.
         zoneManager.GenerateZones(planeTransform, planeSize);
+        zoneManager.BuildRuntimeNavMesh();
 
         spawnManager.SpawnEnemyInRandomZone();
     }

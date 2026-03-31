@@ -8,8 +8,7 @@ public class ZoneManager : MonoBehaviour
 {
     // Non-zero clamp to a minimum.
     private const float MIN_CAPTURE = 0.1f;
-    private const string PLAYER_TAG = "player";
-    private const string ENEMY_TAG = "enemy";
+    private const string ENEMY_TAG = "Enemy";
 
     [Header("Player position (will be AR Main Camera)")]
     [SerializeField]
@@ -41,6 +40,9 @@ public class ZoneManager : MonoBehaviour
     [SerializeField]
     private GameObject flagPrefabContested;
 
+    [Header("Runtime Navigation")]
+    private NavMeshSurface runtimeNavMeshSurface;
+
     // How long it takes to capture a zone when standing in it.
     [SerializeField]
     private float secondsToCapture = 3f;
@@ -64,6 +66,8 @@ public class ZoneManager : MonoBehaviour
     // Independent capture state for each side so progress can be tracked separately.
     private readonly CaptureState playerCaptureState = new CaptureState();
     private readonly CaptureState enemyCaptureState = new CaptureState();
+    private Zone activeContestedZone;
+    private ZoneOwner activeContestedPreviousOwner = ZoneOwner.Neutral;
 
     public enum ZoneOwner {
         Neutral,
@@ -83,8 +87,11 @@ public class ZoneManager : MonoBehaviour
             }
         }
 
+        // Reset capture states and contested zone.
         ResetCaptureState(playerCaptureState);
         ResetCaptureState(enemyCaptureState);
+        activeContestedZone = null;
+        activeContestedPreviousOwner = ZoneOwner.Neutral;
 
     }
 
@@ -108,17 +115,32 @@ public class ZoneManager : MonoBehaviour
         }
     }
 
+    // Builds navmesh from generated runtime geometry.
+    public void BuildRuntimeNavMesh() {
+        EnsureRuntimeNavMeshSurface();
+        runtimeNavMeshSurface.BuildNavMesh();
+    }
+
+    // Returns nearest zone that the enemy should try to capture next.
+    public Zone GetNearestEnemyTargetZone(Vector3 fromPosition) {
+        return GetNearestZoneByOwners(fromPosition, ZoneOwner.Neutral, ZoneOwner.Player);
+    }
+
+    // Returns the first zone containing this world position, if any.
+    public Zone GetZoneAtWorldPosition(Vector3 position) {
+        return GetZoneAt(position);
+    }
+
     // Updates zone capture and drain progress each frame.
     private void Update() {
-        // Clamp configured durations so capture math never divides by zero.
+        // Clamp durations so capture math never divides by zero.
         float captureRate = Mathf.Max(secondsToCapture, MIN_CAPTURE);
         float drainRate = Mathf.Max(secondsToDrain, MIN_CAPTURE);
 
-        // Resolve the player's current zone from the object tagged "player".
-        GameObject player = GameObject.FindWithTag(PLAYER_TAG);
+        // Resolve the player's current zone from the assigned AR Main Camera transform.
         Zone playerZone;
-        if (player != null) {
-            playerZone = GetZoneAt(player.transform.position);
+        if (mainCameraTransform != null) {
+            playerZone = GetZoneAt(mainCameraTransform.position);
         } else {
             playerZone = null;
         }
@@ -132,11 +154,17 @@ public class ZoneManager : MonoBehaviour
             enemyZone = null;
         }
 
-        // If both are in the same zone, that zone is contested and capture is paused.
+        Zone sharedZone;
         if (playerZone != null && enemyZone != null && playerZone == enemyZone) {
-            if (playerZone.Owner != ZoneOwner.Contested) {
-                playerZone.SetOwner(ZoneOwner.Contested);
-            }
+            sharedZone = playerZone;
+        } else {
+            sharedZone = null;
+        }
+
+        UpdateContestedVisualState(sharedZone);
+
+        // If both are in the same zone, that zone is contested and capture is paused.
+        if (sharedZone != null) {
             return;
         }
 
@@ -146,13 +174,35 @@ public class ZoneManager : MonoBehaviour
             captureRate,
             drainRate);
 
-        if (enemy == null) return;
 
         UpdateCaptureForOwner(
             ZoneOwner.Enemy,
             enemyZone,
             captureRate,
             drainRate);
+    }
+
+    // Contested visuals are temporary and only active while both actors share the same zone.
+    // When overlap ends, the zone is restored to its previous owner.
+    private void UpdateContestedVisualState(Zone sharedZone) {
+        if (activeContestedZone != null && activeContestedZone != sharedZone) {
+            if (activeContestedZone.Owner == ZoneOwner.Contested) {
+                activeContestedZone.SetOwner(activeContestedPreviousOwner);
+            }
+            activeContestedZone = null;
+            activeContestedPreviousOwner = ZoneOwner.Neutral;
+        }
+
+        if (sharedZone == null) return;
+
+        if (activeContestedZone != sharedZone) {
+            activeContestedPreviousOwner = sharedZone.Owner;
+            activeContestedZone = sharedZone;
+        }
+
+        if (sharedZone.Owner != ZoneOwner.Contested) {
+            sharedZone.SetOwner(ZoneOwner.Contested);
+        }
     }
 
     // Shared capture flow for a given owner using a switch on zone ownership.
@@ -165,7 +215,9 @@ public class ZoneManager : MonoBehaviour
         CaptureState state = GetCaptureState(capturingOwner);
 
         if (zoneUnderActor == null) {
+            // If the actor is not in a zone, drain capture progress.
             state.progress = Mathf.Max(0f, state.progress - (Time.deltaTime / drainRate));
+            // If the capture progress is 0, reset the active zone.
             if (state.progress == 0f) {
                 state.activeZone = null;
             }
@@ -205,9 +257,14 @@ public class ZoneManager : MonoBehaviour
     }
 
     private CaptureState GetCaptureState(ZoneOwner owner) {
-        return owner == ZoneOwner.Enemy ? enemyCaptureState : playerCaptureState;
+        if (owner == ZoneOwner.Enemy) {
+            return enemyCaptureState;
+        } else {
+            return playerCaptureState;
+        }
     }
 
+    // Resets the capture state to the default values. activeZone is set to null and progress is set to 0.
     private static void ResetCaptureState(CaptureState state) {
         state.activeZone = null;
         state.progress = 0f;
@@ -229,6 +286,26 @@ public class ZoneManager : MonoBehaviour
         }
         int randomIndex = Random.Range(0, zones.Count);
         return zones[randomIndex];
+    }
+
+    private Zone GetNearestZoneByOwners(Vector3 fromPosition, ZoneOwner firstAllowedOwner, ZoneOwner secondAllowedOwner) {
+        Zone nearestZone = null;
+        float nearestDistanceSquared = float.MaxValue;
+
+        foreach (Zone zone in zones) {
+            if (zone == null) continue;
+
+            ZoneOwner owner = zone.Owner;
+            if (owner != firstAllowedOwner && owner != secondAllowedOwner) continue;
+
+            float distanceSquared = (zone.transform.position - fromPosition).sqrMagnitude;
+            if (distanceSquared >= nearestDistanceSquared) continue;
+
+            nearestDistanceSquared = distanceSquared;
+            nearestZone = zone;
+        }
+
+        return nearestZone;
     }
 
     // Creates one zone GameObject and initializes its Zone component.
@@ -272,6 +349,20 @@ public class ZoneManager : MonoBehaviour
 
         ResetCaptureState(playerCaptureState);
         ResetCaptureState(enemyCaptureState);
+        activeContestedZone = null;
+        activeContestedPreviousOwner = ZoneOwner.Neutral;
+    }
+
+    private void EnsureRuntimeNavMeshSurface() {
+        if (runtimeNavMeshSurface != null) return;
+
+        runtimeNavMeshSurface = GetComponent<NavMeshSurface>();
+        if (runtimeNavMeshSurface == null) {
+            runtimeNavMeshSurface = gameObject.AddComponent<NavMeshSurface>();
+        }
+
+        runtimeNavMeshSurface.collectObjects = CollectObjects.Children;
+        runtimeNavMeshSurface.useGeometry = NavMeshCollectGeometry.PhysicsColliders;
     }
 
 }

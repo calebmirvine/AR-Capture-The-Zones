@@ -9,6 +9,7 @@ public class SpawnManager : MonoBehaviour
     public void SpawnEnemyInRandomZone()
     {
         Zone randomZone = zoneManager.GetRandomZone();
+        if (randomZone == null) return;
 
         // Instantiate the enemy prefab at the random zone's position
         Instantiate(enemyPrefab, randomZone.transform.position, Quaternion.identity);
