@@ -6,13 +6,10 @@ using UnityEngine.AI;
 // After floor confirm: spawns zones, optional grid lines, and reads player position from the assigned Main Camera.
 public class ZoneManager : MonoBehaviour
 {
-    // Non-zero clamp to a minimum.
-    private const float MIN_CAPTURE = 0.1f;
-    private const string ENEMY_TAG = "Enemy";
-
     [Header("Player position (will be AR Main Camera)")]
     [SerializeField]
-    private Transform mainCameraTransform;
+    public Transform mainCameraTransform;
+
 
     [Header("Grid size")]
     [SerializeField]
@@ -63,6 +60,8 @@ public class ZoneManager : MonoBehaviour
         public float progress;
     }
 
+
+
     // Independent capture state for each side so progress can be tracked separately.
     private readonly CaptureState playerCaptureState = new CaptureState();
     private readonly CaptureState enemyCaptureState = new CaptureState();
@@ -74,6 +73,13 @@ public class ZoneManager : MonoBehaviour
         Contested,
         Player,
         Enemy
+    }
+
+    // True when this zone is neutral or player-held so the enemy may contest it; false if zone is null.
+    public static bool CanEnemyCapture(Zone zone) {
+        if (zone == null) return false;
+        ZoneOwner owner = zone.Owner;
+        return owner == ZoneOwner.Neutral || owner == ZoneOwner.Player;
     }
 
     // Builds zones from the confirmed floor plane.
@@ -90,6 +96,7 @@ public class ZoneManager : MonoBehaviour
         // Reset capture states and contested zone.
         ResetCaptureState(playerCaptureState);
         ResetCaptureState(enemyCaptureState);
+        
         activeContestedZone = null;
         activeContestedPreviousOwner = ZoneOwner.Neutral;
 
@@ -123,7 +130,20 @@ public class ZoneManager : MonoBehaviour
 
     // Returns nearest zone that the enemy should try to capture next.
     public Zone GetNearestEnemyTargetZone(Vector3 fromPosition) {
-        return GetNearestZoneByOwners(fromPosition, ZoneOwner.Neutral, ZoneOwner.Player);
+        Zone nearestZone = null;
+        float nearestDistanceSquared = float.MaxValue;
+
+        foreach (Zone zone in zones) {
+            if (!CanEnemyCapture(zone)) continue;
+
+            float distanceSquared = (zone.transform.position - fromPosition).sqrMagnitude;
+            if (distanceSquared >= nearestDistanceSquared) continue;
+
+            nearestDistanceSquared = distanceSquared;
+            nearestZone = zone;
+        }
+
+        return nearestZone;
     }
 
     // Returns the first zone containing this world position, if any.
@@ -133,9 +153,10 @@ public class ZoneManager : MonoBehaviour
 
     // Updates zone capture and drain progress each frame.
     private void Update() {
+        const float minCapture = 0.1f;
         // Clamp durations so capture math never divides by zero.
-        float captureRate = Mathf.Max(secondsToCapture, MIN_CAPTURE);
-        float drainRate = Mathf.Max(secondsToDrain, MIN_CAPTURE);
+        float captureRate = Mathf.Max(secondsToCapture, minCapture);
+        float drainRate = Mathf.Max(secondsToDrain, minCapture);
 
         // Resolve the player's current zone from the assigned AR Main Camera transform.
         Zone playerZone;
@@ -146,7 +167,7 @@ public class ZoneManager : MonoBehaviour
         }
 
         // Resolve the enemy's current zone from the object tagged "enemy".
-        GameObject enemy = GameObject.FindWithTag(ENEMY_TAG);
+        GameObject enemy = GameObject.FindWithTag("Enemy");
         Zone enemyZone;
         if (enemy != null) {
             enemyZone = GetZoneAt(enemy.transform.position);
@@ -288,24 +309,8 @@ public class ZoneManager : MonoBehaviour
         return zones[randomIndex];
     }
 
-    private Zone GetNearestZoneByOwners(Vector3 fromPosition, ZoneOwner firstAllowedOwner, ZoneOwner secondAllowedOwner) {
-        Zone nearestZone = null;
-        float nearestDistanceSquared = float.MaxValue;
-
-        foreach (Zone zone in zones) {
-            if (zone == null) continue;
-
-            ZoneOwner owner = zone.Owner;
-            if (owner != firstAllowedOwner && owner != secondAllowedOwner) continue;
-
-            float distanceSquared = (zone.transform.position - fromPosition).sqrMagnitude;
-            if (distanceSquared >= nearestDistanceSquared) continue;
-
-            nearestDistanceSquared = distanceSquared;
-            nearestZone = zone;
-        }
-
-        return nearestZone;
+    public int GetZoneCount() {
+        return zones.Count;
     }
 
     // Creates one zone GameObject and initializes its Zone component.

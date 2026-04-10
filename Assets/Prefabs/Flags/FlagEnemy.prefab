@@ -22,11 +22,11 @@ PrefabInstance:
       objectReference: {fileID: 2100000, guid: d81b063ccbccd45f4ba73d9004a230b4, type: 2}
     - target: {fileID: 8159476798780534479, guid: d0d5156fe0cf74bc1beaf728ca8a5fb8, type: 3}
       propertyPath: m_Name
-      value: FlagNeutral Variant
+      value: FlagEnemy
       objectReference: {fileID: 0}
     - target: {fileID: 8795344417913187823, guid: d0d5156fe0cf74bc1beaf728ca8a5fb8, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0.16777
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8795344417913187823, guid: d0d5156fe0cf74bc1beaf728ca8a5fb8, type: 3}
       propertyPath: m_LocalPosition.y
@@ -34,7 +34,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8795344417913187823, guid: d0d5156fe0cf74bc1beaf728ca8a5fb8, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -2.37573
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8795344417913187823, guid: d0d5156fe0cf74bc1beaf728ca8a5fb8, type: 3}
       propertyPath: m_LocalRotation.w

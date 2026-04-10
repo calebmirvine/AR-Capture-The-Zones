@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.UI;
 using UnityEngine.XR.ARFoundation;
 
@@ -6,7 +7,9 @@ using UnityEngine.XR.ARFoundation;
 // After confirm: hides planes, stops tracking, and tells ZoneManager to build the grid.
 public class GameManager : MonoBehaviour
 {
-    [Header("AR")]
+    private const float EnemySpawnSampleRadius = 0.75f;
+    private const int EnemySpawnZoneAttempts = 6;
+
     [SerializeField]
     private ARPlaneManager arPlaneManager;
 
@@ -14,7 +17,7 @@ public class GameManager : MonoBehaviour
     private ZoneManager zoneManager;
 
     [SerializeField]
-    private SpawnManager spawnManager;
+    private GameObject enemyPrefab;
 
     [SerializeField]
     private Button confirmButton;
@@ -45,10 +48,6 @@ public class GameManager : MonoBehaviour
     // User tapped Confirm: lock in the current plane and spawn zones on it.
     private void OnConfirmScan() {
         ARPlane planeToUse = GetLargestPlane();
-        if (planeToUse == null) {
-            Debug.LogWarning("Cannot confirm scan because no AR plane is available.");
-            return;
-        }
 
         Transform planeTransform = planeToUse.transform;
         Vector2 planeSize = planeToUse.size;
@@ -65,7 +64,7 @@ public class GameManager : MonoBehaviour
         zoneManager.GenerateZones(planeTransform, planeSize);
         zoneManager.BuildRuntimeNavMesh();
 
-        spawnManager.SpawnEnemyInRandomZone();
+        SpawnEnemyInRandomZone();
     }
 
     // Returns the largest tracked AR plane, or null when none exist.
@@ -82,5 +81,26 @@ public class GameManager : MonoBehaviour
         }
 
         return largestPlane;
+    }
+
+    private void SpawnEnemyInRandomZone() {
+
+        for (int attempt = 0; attempt < EnemySpawnZoneAttempts; attempt++) {
+            Zone randomZone = zoneManager.GetRandomZone();
+            if (randomZone == null) continue;
+
+            Vector3 zonePosition = randomZone.transform.position;
+            if (!NavMesh.SamplePosition(zonePosition, out NavMeshHit navHit, EnemySpawnSampleRadius, NavMesh.AllAreas)) {
+                continue;
+            }
+
+            GameObject spawnedEnemyObject = Instantiate(enemyPrefab, navHit.position, Quaternion.identity);
+            Enemy spawnedEnemy = spawnedEnemyObject.GetComponentInChildren<Enemy>(true);
+            if (spawnedEnemy != null) {
+                //Set the zone manager for the enemy, so it can access the zones and the nav mesh.
+                spawnedEnemy.ZoneManager = zoneManager;
+            } 
+            return;
+        }
     }
 }
