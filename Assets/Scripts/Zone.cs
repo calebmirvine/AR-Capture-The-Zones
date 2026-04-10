@@ -35,7 +35,7 @@ public class Zone : MonoBehaviour
         GameObject quadObject = GameObject.CreatePrimitive(PrimitiveType.Quad);
         quadObject.name = "FloorQuad";
         quadObject.transform.SetParent(transform, false);
-        quadObject.transform.localPosition = new Vector3(0f, 0.001f, 0f);
+        quadObject.transform.localPosition = new Vector3(0f, 0.005f, 0f);
         quadObject.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
         quadObject.transform.localScale = new Vector3(halfSizeX * 2f, halfSizeZ * 2f, 1f);
 
