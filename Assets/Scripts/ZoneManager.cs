@@ -48,6 +48,10 @@ public class ZoneManager : MonoBehaviour
     [SerializeField]
     private float secondsToDrain = 2f;
 
+    [Header("Player feedback")]
+    [SerializeField]
+    private bool hapticsOnPlayerCapture = true;
+
     // All cells in row-major order (row 0 col 0, row 0 col 1, …).
     // Empty until zones are generated after floor confirm.
     private readonly List<Zone> zones = new List<Zone>();
@@ -206,6 +210,7 @@ public class ZoneManager : MonoBehaviour
     // Contested visuals are temporary and only active while both actors share the same zone.
     // When overlap ends, the zone is restored to its previous owner.
     private void UpdateContestedVisualState(Zone sharedZone) {
+        // If the active contested zone is not the shared zone, reset the contested zone.
         if (activeContestedZone != null && activeContestedZone != sharedZone) {
             if (activeContestedZone.Owner == ZoneOwner.Contested) {
                 activeContestedZone.SetOwner(activeContestedPreviousOwner);
@@ -214,13 +219,16 @@ public class ZoneManager : MonoBehaviour
             activeContestedPreviousOwner = ZoneOwner.Neutral;
         }
 
+        // If there is no shared zone, return.
         if (sharedZone == null) return;
 
+        // Set the contested zone to the shared zone.
         if (activeContestedZone != sharedZone) {
             activeContestedPreviousOwner = sharedZone.Owner;
             activeContestedZone = sharedZone;
         }
 
+        // Set the zone to contested if it is not already contested.
         if (sharedZone.Owner != ZoneOwner.Contested) {
             sharedZone.SetOwner(ZoneOwner.Contested);
         }
@@ -238,6 +246,7 @@ public class ZoneManager : MonoBehaviour
         if (zoneUnderActor == null) {
             // If the actor is not in a zone, drain capture progress.
             state.progress = Mathf.Max(0f, state.progress - (Time.deltaTime / drainRate));
+
             // If the capture progress is 0, reset the active zone.
             if (state.progress == 0f) {
                 state.activeZone = null;
@@ -274,6 +283,9 @@ public class ZoneManager : MonoBehaviour
         if (state.progress < 1f) return;
 
         zoneUnderActor.SetOwner(capturingOwner);
+        if (capturingOwner == ZoneOwner.Player && hapticsOnPlayerCapture) {
+            Handheld.Vibrate();
+        }
         ResetCaptureState(state);
     }
 
@@ -301,10 +313,6 @@ public class ZoneManager : MonoBehaviour
 
     // Returns a random zone from all available zones.
     public Zone GetRandomZone() {
-        if (zones.Count == 0) {
-            Debug.Log("Zones list empty. Cannot get random zone.");
-            return null;
-        }
         int randomIndex = Random.Range(0, zones.Count);
         return zones[randomIndex];
     }
