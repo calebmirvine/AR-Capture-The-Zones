@@ -8,6 +8,8 @@ using UnityEngine.XR.ARFoundation;
 public class GameManager : MonoBehaviour
 {
     private const float EnemySpawnSampleRadius = 0.75f;
+
+    // Try to spawn the enemy in 6 random zones so we have a better chance of finding a valid zone.
     private const int EnemySpawnZoneAttempts = 6;
 
     [SerializeField]
@@ -29,58 +31,76 @@ public class GameManager : MonoBehaviour
     [SerializeField]
     private float minimumPlaneArea = 1f;
 
-    private void Start() {
+    private void Start()
+{
         confirmButton.gameObject.SetActive(false);
         confirmButton.onClick.AddListener(OnConfirmScan);
     }
 
-    private void OnDestroy() {
+    private void OnDestroy()
+{
         confirmButton.onClick.RemoveListener(OnConfirmScan);
     }
 
     // While scanning, show Confirm once a large enough plane is found.
-    private void Update() {
-        if (!arPlaneManager.enabled) return;
+    private void Update()
+{
+        if (!arPlaneManager.enabled)
+{
+            return;
+        }
 
         ARPlane largestPlane = GetLargestPlane();
         bool hasValidPlane = largestPlane != null &&
             (largestPlane.size.x * largestPlane.size.y) >= minimumPlaneArea;
+
         confirmButton.gameObject.SetActive(hasValidPlane);
     }
 
     // User tapped Confirm: lock in the current plane and spawn zones on it.
-    private void OnConfirmScan() {
+    private void OnConfirmScan()
+{
         ARPlane planeToUse = GetLargestPlane();
+        if (planeToUse == null)
+{
+            return;
+        }
 
         Transform planeTransform = planeToUse.transform;
         Vector2 planeSize = planeToUse.size;
 
-
-        //Hide the confirm button and all planes.
+        // Hide the confirm button and all planes.
         confirmButton.gameObject.SetActive(false);
-        foreach (ARPlane plane in arPlaneManager.trackables) {
+        foreach (ARPlane plane in arPlaneManager.trackables)
+{
             plane.gameObject.SetActive(false);
         }
         arPlaneManager.enabled = false;
 
-        //Build zones on the chosen plane.
+        // Build zones on the chosen plane.
         zoneManager.GenerateZones(planeTransform, planeSize);
         zoneManager.BuildRuntimeNavMesh();
 
         SpawnEnemyInRandomZone();
-        if (spawnItems != null) {
+        if (spawnItems != null)
+{
             spawnItems.SpawnInitialPickups();
         }
     }
 
     // Returns the largest tracked AR plane, or null when none exist.
-    private ARPlane GetLargestPlane() {
+    private ARPlane GetLargestPlane()
+{
         ARPlane largestPlane = null;
         float largestPlaneArea = 0f;
 
-        foreach (ARPlane plane in arPlaneManager.trackables) {
+        foreach (ARPlane plane in arPlaneManager.trackables)
+{
             float area = plane.size.x * plane.size.y;
-            if (area <= largestPlaneArea) continue;
+            if (area <= largestPlaneArea)
+{
+                continue;
+            }
 
             largestPlaneArea = area;
             largestPlane = plane;
@@ -89,23 +109,30 @@ public class GameManager : MonoBehaviour
         return largestPlane;
     }
 
-    private void SpawnEnemyInRandomZone() {
-
-        for (int attempt = 0; attempt < EnemySpawnZoneAttempts; attempt++) {
+    private void SpawnEnemyInRandomZone()
+{
+        for (int attempt = 0; attempt < EnemySpawnZoneAttempts; attempt++)
+{
             Zone randomZone = zoneManager.GetRandomZone();
-            if (randomZone == null) continue;
+            if (randomZone == null)
+{
+                continue;
+            }
 
             Vector3 zonePosition = randomZone.transform.position;
-            if (!NavMesh.SamplePosition(zonePosition, out NavMeshHit navHit, EnemySpawnSampleRadius, NavMesh.AllAreas)) {
+            if (!NavMesh.SamplePosition(zonePosition, out NavMeshHit navHit, EnemySpawnSampleRadius, NavMesh.AllAreas))
+{
                 continue;
             }
 
             GameObject spawnedEnemyObject = Instantiate(enemyPrefab, navHit.position, Quaternion.identity);
             Enemy spawnedEnemy = spawnedEnemyObject.GetComponentInChildren<Enemy>(true);
-            if (spawnedEnemy != null) {
-                //Set the zone manager for the enemy, so it can access the zones and the nav mesh.
+            if (spawnedEnemy != null)
+{
+                // Set the zone manager for the enemy, so it can access zones and navmesh state.
                 spawnedEnemy.ZoneManager = zoneManager;
-            } 
+            }
+
             return;
         }
     }

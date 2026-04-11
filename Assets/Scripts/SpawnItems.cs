@@ -24,19 +24,28 @@ public class SpawnItems : MonoBehaviour
 
     private Coroutine spawnLoopRoutine;
 
-    public void SpawnInitialPickups() {
+    public void SpawnInitialPickups()
+{
         spawnLoopRoutine = StartCoroutine(SpawnLoop());
     }
 
-    private IEnumerator SpawnLoop() {
+    private IEnumerator SpawnLoop()
+{
         yield return new WaitForSeconds(initialSpawnDelay);
 
         float lowDelay = Mathf.Min(minSpawnDelay, maxSpawnDelay);
         float highDelay = Mathf.Max(minSpawnDelay, maxSpawnDelay);
 
-        while (true) {
+        while (true)
+{
             GameObject pickupPrefab = pickupPrefabs[Random.Range(0, pickupPrefabs.Count)];
             Zone randomZone = zoneManager.GetRandomNeutralFirstZone();
+            if (randomZone == null)
+{
+                yield return new WaitForSeconds(lowDelay);
+                continue;
+            }
+
             Vector3 spawnPosition = randomZone.GetRandomWorldPointInside();
             spawnPosition.y += spawnHeightOffset;
 

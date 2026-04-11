@@ -9,7 +9,7 @@ public class EnemyPatrolState : EnemyStateMachineBehaviour
         base.OnStateEnter(animator, stateInfo, layerIndex);
         captureRequested = false;
         animator.SetBool(CapturingParam, false);
-        
+
         enemy.FindAndMoveToTarget();
     }
 
@@ -17,21 +17,28 @@ public class EnemyPatrolState : EnemyStateMachineBehaviour
     {
         if (enemy == null || agent == null) return;
 
-        enemy.FindAndMoveToTarget();
+        if (enemy.ShouldChooseNewTarget())
+        {
+            enemy.FindAndMoveToTarget();
+        }
 
         animator.SetFloat(SpeedParam, agent.velocity.magnitude);
 
-        if (enemy.IsInCapturableZone()) {
-            if (!captureRequested) {
+        if (enemy.IsInCapturableZone())
+        {
+            if (!captureRequested)
+            {
                 captureRequested = true;
             }
+
             animator.SetBool(CapturingParam, true);
             return;
         }
 
         animator.SetBool(CapturingParam, false);
 
-        if (enemy.CurrentTargetZone == null && enemy.HasReachedDestination()) {
+        if (enemy.CurrentTargetZone == null && enemy.HasReachedDestination())
+        {
             animator.SetTrigger(IdleParam);
         }
     }

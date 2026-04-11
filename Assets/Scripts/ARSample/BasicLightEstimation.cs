@@ -48,51 +48,51 @@
         public Color? colorCorrection { get; private set; }
         
         void Awake ()
-        {
+{
             m_Light = GetComponent<Light>();
         }
 
         void OnEnable()
-        {
+{
             if (m_CameraManager != null)
                 m_CameraManager.frameReceived += FrameChanged;
         }
 
         void OnDisable()
-        {
+{
             if (m_CameraManager != null)
                 m_CameraManager.frameReceived -= FrameChanged;
         }
         
         void FrameChanged(ARCameraFrameEventArgs args)
-        {
+{
             if (args.lightEstimation.averageBrightness.HasValue)
-            {
+{
                 brightness = args.lightEstimation.averageBrightness.Value;
                 m_Light.intensity = brightness.Value;
             }
-            else
-            {
+else
+{
                 brightness = null;
             }
 
             if (args.lightEstimation.averageColorTemperature.HasValue)
-            {
+{
                 colorTemperature = args.lightEstimation.averageColorTemperature.Value;
                 m_Light.colorTemperature = colorTemperature.Value;
             }
-            else
-            {
+else
+{
                 colorTemperature = null;
             }
 
             if (args.lightEstimation.colorCorrection.HasValue)
-            {
+{
                 colorCorrection = args.lightEstimation.colorCorrection.Value;
                 m_Light.color = colorCorrection.Value;
             }
-            else
-            {
+else
+{
                 colorCorrection = null;
             }
         }

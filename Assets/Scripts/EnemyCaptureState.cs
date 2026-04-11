@@ -13,20 +13,23 @@ public class EnemyCaptureState : EnemyStateMachineBehaviour
         animator.SetBool(CapturingParam, true);
         animator.SetInteger(DanceIdxParam, danceIndex);
 
-        
-        if (agent != null) {
+
+        if (agent != null)
+        {
             agent.updateRotation = false;
         }
     }
 
     override public void OnStateUpdate(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
-        if (enemy == null && !TryResolveEnemyAndAgent(animator)){
+        if (enemy == null)
+        {
             return;
-        } 
+        }
 
         Camera mainCamera = Camera.main;
-        if (mainCamera == null){
+        if (mainCamera == null)
+        {
             return;
         }
 
@@ -39,7 +42,8 @@ public class EnemyCaptureState : EnemyStateMachineBehaviour
     {
         animator.SetBool(CapturingParam, false);
 
-        if (agent != null) {
+        if (agent != null)
+        {
             agent.updateRotation = true;
         }
     }

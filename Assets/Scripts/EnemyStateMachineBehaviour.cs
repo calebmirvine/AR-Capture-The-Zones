@@ -15,33 +15,14 @@ public class EnemyStateMachineBehaviour : StateMachineBehaviour
     // OnStateEnter is called when a transition starts and the state machine starts to evaluate this state
     override public void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
-        if (TryResolveEnemyAndAgent(animator)) {
-            return;
-        }
-    }
-    protected bool TryResolveEnemyAndAgent(Animator animator)
-    {
-        
         enemy = animator.GetComponent<Enemy>();
-        if (enemy != null) {
+        if (enemy != null)
+        {
             agent = enemy.Agent;
-            return true;
         }
-
-        enemy = animator.GetComponentInParent<Enemy>();
-        if (enemy != null) {
-            agent = enemy.Agent;
-            return true;
+        else
+        {
+            agent = null;
         }
-
-        enemy = animator.GetComponentInChildren<Enemy>(true);
-        if (enemy != null) {
-            agent = enemy.Agent;
-            return true;
-        }
-
-        agent = null;
-        Debug.Log("No enemy found");
-        return false;
     }
 }

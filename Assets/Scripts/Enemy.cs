@@ -7,38 +7,36 @@ public class Enemy : MonoBehaviour
     private const float MinIdleVelocitySquared = 0.01f;
     private const string CapturingParam = "IsCapturing";
 
-    [SerializeField]
-    private ZoneManager zoneManager;
+    [SerializeField] private ZoneManager zoneManager;
 
-    public ZoneManager ZoneManager {
+    public ZoneManager ZoneManager
+    {
         set { zoneManager = value; }
     }
 
-    [SerializeField]
-    private NavMeshAgent navMeshAgent;
+    [SerializeField] private NavMeshAgent navMeshAgent;
 
-    [SerializeField]
-    public float IdleTime = 0.5f;
+    //Time to wait before retargeting
+    [SerializeField] public float IdleTime = 0.5f;
 
-    public NavMeshAgent Agent {
+    public NavMeshAgent Agent
+    {
         get { return navMeshAgent; }
     }
 
-    public Zone CurrentTargetZone {
+    public Zone CurrentTargetZone
+    {
         get { return activeTargetZone; }
     }
 
     private Zone activeTargetZone;
-    private float nextRetargetAtTime = 0f;
+    private float nextRetargetAtTime;
 
-    [SerializeField]
-    private Animator animator;
+    [SerializeField] private Animator animator;
 
-    [SerializeField]
-    private GameObject projectilePrefab;
+    [SerializeField] private GameObject projectilePrefab;
 
-    [SerializeField]
-    public Transform projectileSpawnPoint;
+    [SerializeField] public Transform projectileSpawnPoint;
 
     private float projectileForce = 35f;
 
@@ -54,7 +52,8 @@ public class Enemy : MonoBehaviour
     public void ShootEvent()
     {
         //Spawn projectile at spawn point
-        GameObject projectile = Instantiate(projectilePrefab, projectileSpawnPoint.position, projectileSpawnPoint.rotation);
+        GameObject projectile =
+            Instantiate(projectilePrefab, projectileSpawnPoint.position, projectileSpawnPoint.rotation);
         //Move it forward
         Rigidbody rb = projectile.GetComponent<Rigidbody>();
         rb.AddForce(transform.forward * projectileForce, ForceMode.Impulse);
@@ -72,6 +71,12 @@ public class Enemy : MonoBehaviour
 
     public bool ShouldChooseNewTarget()
     {
+        if (IsInContestedZone())
+        {
+            return false;
+        }
+
+
         // While standing in a neutral/player zone, keep the current goal/path; do not re-pick every frame.
         if (IsInCapturableZone()) return false;
 
@@ -86,7 +91,8 @@ public class Enemy : MonoBehaviour
     public void FindAndMoveToTarget()
     {
         activeTargetZone = zoneManager.GetNearestEnemyTargetZone(transform.position);
-        if (activeTargetZone == null) {
+        if (activeTargetZone == null)
+        {
             return;
         }
 
@@ -100,11 +106,16 @@ public class Enemy : MonoBehaviour
         return ZoneManager.CanEnemyCapture(zoneManager.GetZoneAtWorldPosition(transform.position));
     }
 
+    private bool IsInContestedZone()
+    {
+        Zone currentZone = zoneManager.GetZoneAtWorldPosition(transform.position);
+        return currentZone != null && currentZone.Owner == ZoneManager.ZoneOwner.Contested;
+    }
+
     public bool HasReachedDestination()
     {
         if (navMeshAgent.pathPending) return false;
         if (navMeshAgent.remainingDistance > navMeshAgent.stoppingDistance) return false;
         return !navMeshAgent.hasPath || navMeshAgent.velocity.sqrMagnitude < MinIdleVelocitySquared;
     }
-
 }
