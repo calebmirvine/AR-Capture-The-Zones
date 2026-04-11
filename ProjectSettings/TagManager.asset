@@ -9,6 +9,7 @@ TagManager:
   - FxTemporaire
   - Flag
   - Ground
+  - Pickup
   layers:
   - Default
   - TransparentFX

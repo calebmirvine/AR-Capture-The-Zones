@@ -20,10 +20,11 @@ public class Zone : MonoBehaviour
 
     // Initializes this zone's geometry and flag visuals.
     public void Setup(float worldCellSizeX, float worldCellSizeZ, ZoneManager manager)
-{
+    {
         owner = ZoneManager.ZoneOwner.Neutral;
         zoneManager = manager;
 
+        //half size for the quad so we can center it.
         halfSizeX = worldCellSizeX * 0.5f;
         halfSizeZ = worldCellSizeZ * 0.5f;
 
@@ -33,11 +34,11 @@ public class Zone : MonoBehaviour
 
     // Creates a flat floor quad slightly above the plane.
     private void BuildFloorQuad()
-{
+    {
         GameObject quadObject = GameObject.CreatePrimitive(PrimitiveType.Quad);
         quadObject.name = "FloorQuad";
         quadObject.transform.SetParent(transform, false);
-        quadObject.transform.localPosition = new Vector3(0f, 0.002f, 0f);
+        quadObject.transform.localPosition = new Vector3(0f, 0.02f, 0f);
         quadObject.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
         quadObject.transform.localScale = new Vector3(halfSizeX * 2f, halfSizeZ * 2f, 1f);
 
@@ -51,19 +52,19 @@ public class Zone : MonoBehaviour
 
     // Sets the owner and updates floor/flag visuals.
     public void SetOwner(ZoneManager.ZoneOwner newOwner)
-{
+    {
         owner = newOwner;
         ApplyVisualsForCurrentOwner();
     }
 
     // Applies floor material and owner-specific flag prefab.
     private void ApplyVisualsForCurrentOwner()
-{
+    {
         floorQuadRenderer.material = zoneManager.GetFloorMaterial(owner);
 
         // Replaces the current flag object with this owner's prefab.
         if (activeFlagObject != null)
-{
+        {
             Destroy(activeFlagObject);
         }
 
@@ -76,7 +77,7 @@ public class Zone : MonoBehaviour
 
     // Returns true when the world point lies inside this zone bounds.
     public bool Contains(Vector3 worldPosition)
-{
+    {
         Vector3 localPosition = transform.InverseTransformPoint(worldPosition);
         bool insideX = Mathf.Abs(localPosition.x) <= halfSizeX;
         bool insideZ = Mathf.Abs(localPosition.z) <= halfSizeZ;
@@ -84,7 +85,7 @@ public class Zone : MonoBehaviour
     }
 
     public Vector3 GetRandomWorldPointInside()
-{
+    {
         float randomLocalX = Random.Range(-halfSizeX, halfSizeX);
         float randomLocalZ = Random.Range(-halfSizeZ, halfSizeZ);
         Vector3 randomLocalPoint = new Vector3(randomLocalX, 0f, randomLocalZ);

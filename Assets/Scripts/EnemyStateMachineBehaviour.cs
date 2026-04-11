@@ -16,6 +16,11 @@ public class EnemyStateMachineBehaviour : StateMachineBehaviour
     override public void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
         enemy = animator.GetComponent<Enemy>();
+        if (enemy == null)
+        {
+            enemy = animator.GetComponentInParent<Enemy>();
+        }
+
         if (enemy != null)
         {
             agent = enemy.Agent;

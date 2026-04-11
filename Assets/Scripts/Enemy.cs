@@ -30,7 +30,7 @@ public class Enemy : MonoBehaviour
     }
 
     private Zone activeTargetZone;
-    private float nextRetargetAtTime;
+    private float nextRetargetAtTime = 0f;
 
     [SerializeField] private Animator animator;
 
@@ -76,8 +76,7 @@ public class Enemy : MonoBehaviour
             return false;
         }
 
-
-        // While standing in a neutral/player zone, keep the current goal/path; do not re-pick every frame.
+        // While standing in a neutral/player zone, keep the current goal/path
         if (IsInCapturableZone()) return false;
 
         // Refind when target is missing, no longer capturable, reached, or timer elapsed.
@@ -90,6 +89,12 @@ public class Enemy : MonoBehaviour
 
     public void FindAndMoveToTarget()
     {
+        if (zoneManager == null || navMeshAgent == null)
+        {
+            return;
+        }
+
+        navMeshAgent.isStopped = false;
         activeTargetZone = zoneManager.GetNearestEnemyTargetZone(transform.position);
         if (activeTargetZone == null)
         {
@@ -106,10 +111,22 @@ public class Enemy : MonoBehaviour
         return ZoneManager.CanEnemyCapture(zoneManager.GetZoneAtWorldPosition(transform.position));
     }
 
-    private bool IsInContestedZone()
+    public bool IsInContestedZone()
     {
         Zone currentZone = zoneManager.GetZoneAtWorldPosition(transform.position);
         return currentZone != null && currentZone.Owner == ZoneManager.ZoneOwner.Contested;
+    }
+
+    public void HoldPositionInCurrentZone()
+    {
+        // Keep enemy in place while contested instead of continuing an old path out.
+        navMeshAgent.isStopped = true;
+        navMeshAgent.ResetPath();
+    }
+
+    public void ResumeMovement()
+    {
+        navMeshAgent.isStopped = false;
     }
 
     public bool HasReachedDestination()

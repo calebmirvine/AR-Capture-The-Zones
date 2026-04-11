@@ -85,11 +85,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d786e2d05a34bf741b1bd7fd569828cd, type: 3}
---- !u!1 &5476560717393466189 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 1949398963624892, guid: d786e2d05a34bf741b1bd7fd569828cd, type: 3}
-  m_PrefabInstance: {fileID: 5478147373619742961}
-  m_PrefabAsset: {fileID: 0}
 --- !u!4 &5482780022728602049 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4773403894528304, guid: d786e2d05a34bf741b1bd7fd569828cd, type: 3}
@@ -194,10 +189,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0735873ed26f6455f8b1830402700410, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
-  delay: 3
-  explosionRadius: 5
-  explosionForce: 700
-  explosionPrefab: {fileID: 5476560717393466189}
+  delay: 4
+  explosionRadius: 3
+  explosionForce: 100
+  explosionPrefab: {fileID: 1949398963624892, guid: d786e2d05a34bf741b1bd7fd569828cd, type: 3}
 --- !u!4 &5263581525753579991 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: b69ab7dc4a09f094885bf950a65c44c3, type: 3}

@@ -2,13 +2,13 @@ using UnityEngine;
 
 public class EnemyCaptureState : EnemyStateMachineBehaviour
 {
-    private const int DanceVariantCount = 4;
+    private const int danceVariantCount = 8;
 
     override public void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
         base.OnStateEnter(animator, stateInfo, layerIndex);
 
-        int danceIndex = Random.Range(0, DanceVariantCount);
+        int danceIndex = Random.Range(0, danceVariantCount);
 
         animator.SetBool(CapturingParam, true);
         animator.SetInteger(DanceIdxParam, danceIndex);

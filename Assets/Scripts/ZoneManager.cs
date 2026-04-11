@@ -1,39 +1,33 @@
 using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine.AI;
 using Unity.AI.Navigation;
 
 // After floor confirm: spawns zones, optional grid lines, and reads player position from the assigned Main Camera.
 public class ZoneManager : MonoBehaviour
 {
-    [Header("Player position (will be AR Main Camera)")] [SerializeField]
-    public Transform mainCameraTransform;
+    [SerializeField] private Transform mainCameraTransform;
 
 
-    [Header("Grid size")] [SerializeField] private int columns = 3;
+    [SerializeField] private int columns = 3;
     [SerializeField] private int rows = 2;
 
-    [Header("Zone materials — floor (transparent)")] [SerializeField]
-    private Material floorMaterialPlayer;
-
+    [SerializeField] private Material floorMaterialPlayer;
     [SerializeField] private Material floorMaterialEnemy;
     [SerializeField] private Material floorMaterialNeutral;
     [SerializeField] private Material floorMaterialContested;
 
-    [Header("Flag prefabs")] [SerializeField]
-    private GameObject flagPrefabNeutral;
-
+    [SerializeField] private GameObject flagPrefabNeutral;
     [SerializeField] private GameObject flagPrefabPlayer;
     [SerializeField] private GameObject flagPrefabEnemy;
     [SerializeField] private GameObject flagPrefabContested;
 
-    [Header("Runtime Navigation")] private NavMeshSurface runtimeNavMeshSurface;
-
+    private NavMeshSurface runtimeNavMeshSurface;
 
     [SerializeField] private float secondsToCapture = 3f;
-
     [SerializeField] private float secondsToDrain = 2f;
 
-    private readonly List<Zone> zones = new List<Zone>();
+    public readonly List<Zone> zones = new List<Zone>();
 
 
     public int GetZoneCount()
@@ -97,6 +91,7 @@ public class ZoneManager : MonoBehaviour
         activeContestedZone = null;
         activeContestedPreviousOwner = ZoneOwner.Neutral;
     }
+
     // Builds zones from the confirmed floor plane.
     public void GenerateZones(Transform planeTransform, Vector2 planeSize)
     {
@@ -153,6 +148,17 @@ public class ZoneManager : MonoBehaviour
     // Builds navmesh from generated runtime geometry.
     public void BuildRuntimeNavMesh()
     {
+        if (runtimeNavMeshSurface == null)
+        {
+            runtimeNavMeshSurface = GetComponent<NavMeshSurface>();
+            if (runtimeNavMeshSurface == null)
+            {
+                runtimeNavMeshSurface = gameObject.AddComponent<NavMeshSurface>();
+            }
+        }
+
+        runtimeNavMeshSurface.collectObjects = CollectObjects.Children;
+        runtimeNavMeshSurface.useGeometry = NavMeshCollectGeometry.PhysicsColliders;
         runtimeNavMeshSurface.BuildNavMesh();
     }
 
@@ -303,6 +309,7 @@ public class ZoneManager : MonoBehaviour
             {
                 ownerState.activeZone = null;
             }
+
             return;
         }
 
@@ -315,6 +322,7 @@ public class ZoneManager : MonoBehaviour
                     ownerState.progress = 0f;
                     return;
                 }
+
                 break;
             case ZoneOwner.Enemy:
                 if (capturerOwner == ZoneOwner.Enemy)
@@ -323,8 +331,10 @@ public class ZoneManager : MonoBehaviour
                     ownerState.progress = 0f;
                     return;
                 }
+
                 break;
             case ZoneOwner.Neutral:
+                break;
             case ZoneOwner.Contested:
                 break;
             default:
@@ -344,6 +354,8 @@ public class ZoneManager : MonoBehaviour
         }
 
         zoneUnder.SetOwner(capturerOwner);
+
+        // Vibrate the phone when the player captures a zone.
         if (capturerOwner == ZoneOwner.Player)
         {
             Handheld.Vibrate();
@@ -427,5 +439,4 @@ public class ZoneManager : MonoBehaviour
         zone.Setup(worldCellSizeX, worldCellSizeZ, this);
         return zone;
     }
-
 }

@@ -4,44 +4,38 @@ using UnityEngine;
 
 public class SpawnItems : MonoBehaviour
 {
-    [SerializeField]
-    private ZoneManager zoneManager;
+    [SerializeField] private ZoneManager zoneManager;
 
-    [SerializeField]
-    private List<GameObject> pickupPrefabs = new List<GameObject>();
+    [SerializeField] private List<GameObject> pickupPrefabs = new List<GameObject>();
 
-    [SerializeField]
-    private float initialSpawnDelay = 5f;
+    [SerializeField] private float initialSpawnDelay = 5f;
 
-    [SerializeField]
-    private float minSpawnDelay = 3f;
+    [SerializeField] private float minSpawnDelay = 3f;
 
-    [SerializeField]
-    private float maxSpawnDelay = 7f;
+    [SerializeField] private float maxSpawnDelay = 7f;
 
-    [SerializeField]
-    private float spawnHeightOffset = 0.05f;
+    [SerializeField] private float spawnHeightOffset = 0.05f;
 
-    private Coroutine spawnLoopRoutine;
+    
 
     public void SpawnInitialPickups()
-{
-        spawnLoopRoutine = StartCoroutine(SpawnLoop());
+    {
+        StartCoroutine(SpawnLoop());
     }
 
     private IEnumerator SpawnLoop()
-{
+    {
         yield return new WaitForSeconds(initialSpawnDelay);
 
         float lowDelay = Mathf.Min(minSpawnDelay, maxSpawnDelay);
         float highDelay = Mathf.Max(minSpawnDelay, maxSpawnDelay);
 
         while (true)
-{
+        {
             GameObject pickupPrefab = pickupPrefabs[Random.Range(0, pickupPrefabs.Count)];
             Zone randomZone = zoneManager.GetRandomNeutralFirstZone();
             if (randomZone == null)
-{
+            {
                 yield return new WaitForSeconds(lowDelay);
                 continue;
             }

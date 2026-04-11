@@ -10,12 +10,27 @@ public class EnemyPatrolState : EnemyStateMachineBehaviour
         captureRequested = false;
         animator.SetBool(CapturingParam, false);
 
+        if (enemy == null || agent == null)
+        {
+            return;
+        }
+
         enemy.FindAndMoveToTarget();
     }
 
     override public void OnStateUpdate(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
         if (enemy == null || agent == null) return;
+
+        if (enemy.IsInContestedZone())
+        {
+            enemy.HoldPositionInCurrentZone();
+            animator.SetFloat(SpeedParam, 0f);
+            animator.SetBool(CapturingParam, false);
+            return;
+        }
+
+        enemy.ResumeMovement();
 
         if (enemy.ShouldChooseNewTarget())
         {
@@ -45,6 +60,11 @@ public class EnemyPatrolState : EnemyStateMachineBehaviour
 
     override public void OnStateExit(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
+        if (enemy != null)
+        {
+            enemy.ResumeMovement();
+        }
+
         animator.SetFloat(SpeedParam, 0f);
     }
 }
