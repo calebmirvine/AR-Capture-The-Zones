@@ -20,6 +20,9 @@ public class GameManager : MonoBehaviour
     private GameObject enemyPrefab;
 
     [SerializeField]
+    private SpawnItems spawnItems;
+
+    [SerializeField]
     private Button confirmButton;
 
     [Header("Plane size - Minimum floor area in square meters before Confirm is allowed.")]
@@ -65,6 +68,9 @@ public class GameManager : MonoBehaviour
         zoneManager.BuildRuntimeNavMesh();
 
         SpawnEnemyInRandomZone();
+        if (spawnItems != null) {
+            spawnItems.SpawnInitialPickups();
+        }
     }
 
     // Returns the largest tracked AR plane, or null when none exist.

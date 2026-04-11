@@ -77,4 +77,11 @@ public class Zone : MonoBehaviour
         bool insideZ = Mathf.Abs(localPosition.z) <= halfSizeZ;
         return insideX && insideZ;
     }
+
+    public Vector3 GetRandomWorldPointInside() {
+        float randomLocalX = Random.Range(-halfSizeX, halfSizeX);
+        float randomLocalZ = Random.Range(-halfSizeZ, halfSizeZ);
+        Vector3 randomLocalPoint = new Vector3(randomLocalX, 0f, randomLocalZ);
+        return transform.TransformPoint(randomLocalPoint);
+    }
 }
