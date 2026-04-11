@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -10,24 +11,39 @@ public class SpawnItems : MonoBehaviour
     private List<GameObject> pickupPrefabs = new List<GameObject>();
 
     [SerializeField]
-    private int totalPickupCount = 6;
+    private float initialSpawnDelay = 5f;
+
+    [SerializeField]
+    private float minSpawnDelay = 3f;
+
+    [SerializeField]
+    private float maxSpawnDelay = 7f;
 
     [SerializeField]
     private float spawnHeightOffset = 0.05f;
 
-    public void SpawnInitialPickups() {
-        if (zoneManager == null) return;
-        if (zoneManager.GetZoneCount() == 0) return;
-        if (pickupPrefabs.Count == 0) return;
-        if (totalPickupCount <= 0) return;
+    private Coroutine spawnLoopRoutine;
 
-        for (int i = 0; i < totalPickupCount; i++) {
+    public void SpawnInitialPickups() {
+        spawnLoopRoutine = StartCoroutine(SpawnLoop());
+    }
+
+    private IEnumerator SpawnLoop() {
+        yield return new WaitForSeconds(initialSpawnDelay);
+
+        float lowDelay = Mathf.Min(minSpawnDelay, maxSpawnDelay);
+        float highDelay = Mathf.Max(minSpawnDelay, maxSpawnDelay);
+
+        while (true) {
             GameObject pickupPrefab = pickupPrefabs[Random.Range(0, pickupPrefabs.Count)];
-            Zone randomZone = zoneManager.GetRandomZone();
+            Zone randomZone = zoneManager.GetRandomNeutralFirstZone();
             Vector3 spawnPosition = randomZone.GetRandomWorldPointInside();
             spawnPosition.y += spawnHeightOffset;
 
             Instantiate(pickupPrefab, spawnPosition, Quaternion.identity);
+
+            float nextDelay = Random.Range(lowDelay, highDelay);
+            yield return new WaitForSeconds(nextDelay);
         }
     }
 }

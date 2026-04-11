@@ -317,6 +317,23 @@ public class ZoneManager : MonoBehaviour
         return zones[randomIndex];
     }
 
+    public Zone GetRandomNeutralFirstZone() {
+        List<Zone> neutralZones = new List<Zone>();
+
+        foreach (Zone zone in zones) {
+            if (zone.Owner == ZoneOwner.Neutral) {
+                neutralZones.Add(zone);
+            }
+        }
+
+        if (neutralZones.Count > 0) {
+            int neutralRandomIndex = Random.Range(0, neutralZones.Count);
+            return neutralZones[neutralRandomIndex];
+        }
+
+        return GetRandomZone();
+    }
+
     public int GetZoneCount() {
         return zones.Count;
     }
