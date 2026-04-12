@@ -9,8 +9,8 @@ public class ZoneManager : MonoBehaviour
     [SerializeField] private Transform mainCameraTransform;
 
 
-    [SerializeField] private int columns = 3;
-    [SerializeField] private int rows = 2;
+    [SerializeField] private readonly int columns = 3;
+    [SerializeField] private readonly int rows = 2;
 
     [SerializeField] private Material floorMaterialPlayer;
     [SerializeField] private Material floorMaterialEnemy;
@@ -24,19 +24,53 @@ public class ZoneManager : MonoBehaviour
 
     private NavMeshSurface runtimeNavMeshSurface;
 
-     [SerializeField] private float secondsToCapture = 3f;
-    [SerializeField] private float secondsToDrain = 2f;
+    [SerializeField] private float playerSecondsToCapture = 3f;
+    [SerializeField] private float enemySecondsToCapture = 3f;
+    [SerializeField] private readonly float secondsToDrain = 2f;
 
     public readonly List<Zone> zones = new List<Zone>();
 
-
-    public int GetZoneCount()
+    private void OnEnable()
     {
-        return zones.Count;
+        Messenger<Transform, Vector2>.AddListener(GameEvent.FLOOR_CONFIRMED, OnFloorConfirmed);
+        Messenger.AddListener(GameEvent.GAMEPLAY_STARTED, OnGameplayStartedNoOp);
+        Messenger<Zone>.AddListener(GameEvent.ZONE_BECAME_NEUTRAL, OnZoneEventNoOp);
+        Messenger<Zone>.AddListener(GameEvent.ZONE_BECAME_CONTESTED, OnZoneEventNoOp);
+        Messenger<Zone>.AddListener(GameEvent.ZONE_BECAME_PLAYER, OnZoneEventNoOp);
+        Messenger<Zone>.AddListener(GameEvent.ZONE_BECAME_ENEMY, OnZoneEventNoOp);
+        Messenger<Zone>.AddListener(GameEvent.PLAYER_CAPTURED_ZONE, OnZoneEventNoOp);
+        Messenger<Zone>.AddListener(GameEvent.ENEMY_CAPTURED_ZONE, OnZoneEventNoOp);
     }
 
+    private void OnDisable()
+    {
+        Messenger<Transform, Vector2>.RemoveListener(GameEvent.FLOOR_CONFIRMED, OnFloorConfirmed);
+        Messenger.RemoveListener(GameEvent.GAMEPLAY_STARTED, OnGameplayStartedNoOp);
+        Messenger<Zone>.RemoveListener(GameEvent.ZONE_BECAME_NEUTRAL, OnZoneEventNoOp);
+        Messenger<Zone>.RemoveListener(GameEvent.ZONE_BECAME_CONTESTED, OnZoneEventNoOp);
+        Messenger<Zone>.RemoveListener(GameEvent.ZONE_BECAME_PLAYER, OnZoneEventNoOp);
+        Messenger<Zone>.RemoveListener(GameEvent.ZONE_BECAME_ENEMY, OnZoneEventNoOp);
+        Messenger<Zone>.RemoveListener(GameEvent.PLAYER_CAPTURED_ZONE, OnZoneEventNoOp);
+        Messenger<Zone>.RemoveListener(GameEvent.ENEMY_CAPTURED_ZONE, OnZoneEventNoOp);
+    }
 
-    // Capture state for each owner.
+    private void OnFloorConfirmed(Transform planeTransform, Vector2 planeSize)
+    {
+        GenerateZones(planeTransform, planeSize);
+        BuildRuntimeNavMesh();
+        Messenger.Broadcast(GameEvent.GAMEPLAY_STARTED, MessengerMode.DONT_REQUIRE_LISTENER);
+    }
+
+    private void OnGameplayStartedNoOp()
+    {
+    }
+
+    private void OnZoneEventNoOp(Zone zone)
+    {
+        _ = zone;
+    }
+
+    // Capture state for each owner
     // activeZone: current zone this owner is trying to capture.
     // progress: capture progress in range [0..secondsToCapture].
     private class CaptureState
@@ -206,7 +240,8 @@ public class ZoneManager : MonoBehaviour
     {
         const float minCapture = 0.1f;
         // Clamp durations so capture math never divides by zero.
-        float captureRate = Mathf.Max(secondsToCapture, minCapture);
+        float playerCaptureRate = Mathf.Max(playerSecondsToCapture, minCapture);
+        float enemyCaptureRate = Mathf.Max(enemySecondsToCapture, minCapture);
         float drainRate = Mathf.Max(secondsToDrain, minCapture);
 
         // Resolve the player's current zone from the assigned AR Main Camera transform.
@@ -253,14 +288,14 @@ public class ZoneManager : MonoBehaviour
         UpdateCaptureForOwner(
             ZoneOwner.Player,
             playerZone,
-            captureRate,
+            playerCaptureRate,
             drainRate);
 
 
         UpdateCaptureForOwner(
             ZoneOwner.Enemy,
             enemyZone,
-            captureRate,
+            enemyCaptureRate,
             drainRate);
     }
 
@@ -273,7 +308,7 @@ public class ZoneManager : MonoBehaviour
         {
             if (activeContestedZone.Owner == ZoneOwner.Contested)
             {
-                activeContestedZone.SetOwner(activeContestedPreviousOwner);
+                SetZoneOwner(activeContestedZone, activeContestedPreviousOwner);
             }
 
             activeContestedZone = null;
@@ -293,7 +328,7 @@ public class ZoneManager : MonoBehaviour
         // Set the zone to contested if it is not already contested.
         if (sharedZone.Owner != ZoneOwner.Contested)
         {
-            sharedZone.SetOwner(ZoneOwner.Contested);
+            SetZoneOwner(sharedZone, ZoneOwner.Contested);
         }
     }
 
@@ -353,12 +388,14 @@ public class ZoneManager : MonoBehaviour
             return;
         }
 
-        zoneUnder.SetOwner(capturerOwner);
-
-        // Vibrate the phone when the player captures a zone.
+        SetZoneOwner(zoneUnder, capturerOwner);
         if (capturerOwner == ZoneOwner.Player)
         {
-            Handheld.Vibrate();
+            Messenger<Zone>.Broadcast(GameEvent.PLAYER_CAPTURED_ZONE, zoneUnder, MessengerMode.DONT_REQUIRE_LISTENER);
+        }
+        else if (capturerOwner == ZoneOwner.Enemy)
+        {
+            Messenger<Zone>.Broadcast(GameEvent.ENEMY_CAPTURED_ZONE, zoneUnder, MessengerMode.DONT_REQUIRE_LISTENER);
         }
 
         ownerState.activeZone = null;
@@ -368,7 +405,43 @@ public class ZoneManager : MonoBehaviour
     // Returns the capture state for a given owner.
     private CaptureState GetCaptureState(ZoneOwner owner)
     {
-        return owner == ZoneOwner.Enemy ? enemyCaptureState : playerCaptureState;
+        if (owner == ZoneOwner.Enemy)
+        {
+            return enemyCaptureState;
+        }
+
+        return playerCaptureState;
+    }
+
+    private void SetZoneOwner(Zone zone, ZoneOwner newOwner)
+    {
+        if (zone == null)
+        {
+            return;
+        }
+
+        ZoneOwner previousOwner = zone.Owner;
+        if (previousOwner == newOwner)
+        {
+            return;
+        }
+
+        zone.SetOwner(newOwner);
+        switch (newOwner)
+        {
+            case ZoneOwner.Neutral:
+                Messenger<Zone>.Broadcast(GameEvent.ZONE_BECAME_NEUTRAL, zone, MessengerMode.DONT_REQUIRE_LISTENER);
+                break;
+            case ZoneOwner.Contested:
+                Messenger<Zone>.Broadcast(GameEvent.ZONE_BECAME_CONTESTED, zone, MessengerMode.DONT_REQUIRE_LISTENER);
+                break;
+            case ZoneOwner.Player:
+                Messenger<Zone>.Broadcast(GameEvent.ZONE_BECAME_PLAYER, zone, MessengerMode.DONT_REQUIRE_LISTENER);
+                break;
+            case ZoneOwner.Enemy:
+                Messenger<Zone>.Broadcast(GameEvent.ZONE_BECAME_ENEMY, zone, MessengerMode.DONT_REQUIRE_LISTENER);
+                break;
+        }
     }
 
     // Returns a random zone from all available zones.

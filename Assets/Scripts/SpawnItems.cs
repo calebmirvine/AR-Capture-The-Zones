@@ -16,11 +16,34 @@ public class SpawnItems : MonoBehaviour
 
     [SerializeField] private float spawnHeightOffset = 0.05f;
 
-    
+    private Coroutine spawnLoopCoroutine;
+    private bool hasStartedSpawning;
+
+    private void OnEnable()
+    {
+        Messenger.AddListener(GameEvent.GAMEPLAY_STARTED, OnGameplayStarted);
+    }
+
+    private void OnDisable()
+    {
+        Messenger.RemoveListener(GameEvent.GAMEPLAY_STARTED, OnGameplayStarted);
+        StopSpawnLoop();
+    }
 
     public void SpawnInitialPickups()
     {
-        StartCoroutine(SpawnLoop());
+        if (hasStartedSpawning)
+        {
+            return;
+        }
+
+        if (zoneManager == null || pickupPrefabs.Count == 0)
+        {
+            return;
+        }
+
+        hasStartedSpawning = true;
+        spawnLoopCoroutine = StartCoroutine(SpawnLoop());
     }
 
     private IEnumerator SpawnLoop()
@@ -48,5 +71,21 @@ public class SpawnItems : MonoBehaviour
             float nextDelay = Random.Range(lowDelay, highDelay);
             yield return new WaitForSeconds(nextDelay);
         }
+    }
+
+    private void StopSpawnLoop()
+    {
+        if (spawnLoopCoroutine != null)
+        {
+            StopCoroutine(spawnLoopCoroutine);
+            spawnLoopCoroutine = null;
+        }
+
+        hasStartedSpawning = false;
+    }
+
+    private void OnGameplayStarted()
+    {
+        SpawnInitialPickups();
     }
 }

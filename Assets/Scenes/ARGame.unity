@@ -1846,7 +1846,7 @@ GameObject:
   - component: {fileID: 478182076}
   - component: {fileID: 478182075}
   m_Layer: 5
-  m_Name: Text (TMP)
+  m_Name: TimeRemainingText (TMP)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3200,7 +3200,7 @@ GameObject:
   - component: {fileID: 988968036}
   - component: {fileID: 988968037}
   m_Layer: 5
-  m_Name: Canvas
+  m_Name: UI Canvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3282,15 +3282,15 @@ RectTransform:
   m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1474687988}
   - {fileID: 1105409922}
   - {fileID: 1987548208}
+  - {fileID: 1312369961}
   - {fileID: 572353067}
   - {fileID: 1957915810}
   - {fileID: 1141252153}
   - {fileID: 821038608}
   - {fileID: 1994450025}
-  - {fileID: 1312369961}
+  - {fileID: 1474687988}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -3312,6 +3312,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::UIManager
   playerScore: {fileID: 174440006}
   enemyScore: {fileID: 66658619}
+  timerText: {fileID: 478182075}
+  zoneManager: {fileID: 1714939351}
+  matchDurationSeconds: 60
 --- !u!114 &988968037
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3416,7 +3419,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1105409922
 RectTransform:
   m_ObjectHideFlags: 0
@@ -3720,6 +3723,7 @@ GameObject:
   - component: {fileID: 1167446573}
   - component: {fileID: 1167446572}
   - component: {fileID: 1167446571}
+  - component: {fileID: 1167446574}
   m_Layer: 0
   m_Name: AR Session
   m_TagString: Untagged
@@ -3769,6 +3773,21 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1167446574
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1167446570}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 82d159eb95e2f4a5aa6f14a4ce780199, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StartButtonController
+  arPlaneManager: {fileID: 2512387470422636671}
+  confirmButton: {fileID: 1474687989}
+  minimumPlaneArea: 1
 --- !u!1 &1208704098
 GameObject:
   m_ObjectHideFlags: 0
@@ -4040,7 +4059,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1312369961
 RectTransform:
   m_ObjectHideFlags: 0
@@ -4181,7 +4200,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1474687990}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1167446574}
+        m_TargetAssemblyTypeName: StartButtonController, Assembly-CSharp
+        m_MethodName: OnConfirmScan
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1474687990
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5331,12 +5362,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b2b434aab8d10458898087c32c7cf614, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
-  arPlaneManager: {fileID: 2512387470422636671}
   zoneManager: {fileID: 1714939351}
   enemyPrefab: {fileID: 6644412174753428724, guid: 319686b70bce4444d9b45749ab10298b, type: 3}
-  spawnItems: {fileID: 0}
-  confirmButton: {fileID: 1474687989}
-  minimumPlaneArea: 3
 --- !u!4 &1951880154
 Transform:
   m_ObjectHideFlags: 0
@@ -5370,7 +5397,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1957915810
 RectTransform:
   m_ObjectHideFlags: 0
@@ -5564,7 +5591,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1987548208
 RectTransform:
   m_ObjectHideFlags: 0
@@ -5715,8 +5742,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MiscPopup
   settingsPopup: {fileID: 1141252156}
-  zoneManager: {fileID: 0}
-  toggleVibrationButton: {fileID: 0}
 --- !u!1 &2083647517
 GameObject:
   m_ObjectHideFlags: 0
