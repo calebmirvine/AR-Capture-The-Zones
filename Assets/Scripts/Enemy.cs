@@ -18,6 +18,11 @@ public class Enemy : MonoBehaviour
 
     //Time to wait before retargeting
     [SerializeField] public float IdleTime = 0.5f;
+    [SerializeField] private float contestedHoldSecondsWhenWinning = 6f;
+    [SerializeField] private float contestedHoldSecondsWhenEven = 4f;
+    [SerializeField] private float contestedHoldSecondsWhenLosing = 2f;
+    [SerializeField] private int zoneLeadForWinningState = 2;
+    [SerializeField] private float contestedRotateCooldownSeconds = 3f;
 
     public NavMeshAgent Agent
     {
@@ -31,6 +36,9 @@ public class Enemy : MonoBehaviour
 
     private Zone activeTargetZone;
     private float nextRetargetAtTime = 0f;
+    private float contestedEnteredAtTime = -1f;
+    private float contestedRotateBlockedUntilTime;
+    private bool hasCommittedToContestedRotation;
 
     [SerializeField] private Animator animator;
 
@@ -64,14 +72,14 @@ public class Enemy : MonoBehaviour
     {
         if (animator == null) return;
         if (!animator.GetBool(CapturingParam)) return;
-        if (IsInCapturableZone()) return;
+        if (!ShouldForceIdle() && IsInCapturableZone()) return;
 
         animator.SetBool(CapturingParam, false);
     }
 
     public bool ShouldChooseNewTarget()
     {
-        if (IsInContestedZone())
+        if (ShouldForceIdle())
         {
             return false;
         }
@@ -95,7 +103,22 @@ public class Enemy : MonoBehaviour
         }
 
         navMeshAgent.isStopped = false;
-        activeTargetZone = zoneManager.GetNearestEnemyTargetZone(transform.position);
+        bool rotatingFromContested = ShouldRotateFromContestedZone();
+        if (rotatingFromContested)
+        {
+            activeTargetZone = GetClosestPlayerOwnedZone();
+        }
+        else
+        {
+            activeTargetZone = zoneManager.GetNearestEnemyTargetZone(transform.position);
+        }
+
+        if (activeTargetZone == null && rotatingFromContested)
+        {
+            // Safety fallback if no player-owned zone exists when the timer elapses.
+            activeTargetZone = zoneManager.GetNearestEnemyTargetZone(transform.position);
+        }
+
         if (activeTargetZone == null)
         {
             return;
@@ -103,6 +126,12 @@ public class Enemy : MonoBehaviour
 
         Vector3 targetPosition = activeTargetZone.transform.position;
         navMeshAgent.SetDestination(targetPosition);
+
+        if (rotatingFromContested)
+        {
+            CommitContestedRotation();
+        }
+
         nextRetargetAtTime = Time.time + Mathf.Max(MinRetargetInterval, IdleTime);
     }
 
@@ -113,12 +142,100 @@ public class Enemy : MonoBehaviour
 
     public bool IsInContestedZone()
     {
+        if (zoneManager == null)
+        {
+            return false;
+        }
+
         Zone currentZone = zoneManager.GetZoneAtWorldPosition(transform.position);
         return currentZone != null && currentZone.Owner == ZoneManager.ZoneOwner.Contested;
     }
 
+    public bool AreAllZonesEnemyControlled()
+    {
+        if (zoneManager == null || zoneManager.zones.Count == 0)
+        {
+            return false;
+        }
+
+        foreach (Zone zone in zoneManager.zones)
+        {
+            if (zone == null)
+            {
+                continue;
+            }
+
+            if (zone.Owner != ZoneManager.ZoneOwner.Enemy)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public bool ShouldForceIdle()
+    {
+        if (AreAllZonesEnemyControlled())
+        {
+            return true;
+        }
+
+        if (!IsInContestedZone())
+        {
+            contestedEnteredAtTime = -1f;
+            hasCommittedToContestedRotation = false;
+            return false;
+        }
+
+        // Once we've committed to leave this contested zone, allow movement out.
+        if (hasCommittedToContestedRotation)
+        {
+            return false;
+        }
+
+        if (contestedEnteredAtTime < 0f)
+        {
+            contestedEnteredAtTime = Time.time;
+        }
+
+        float holdDuration = GetContestedHoldSeconds();
+        return (Time.time - contestedEnteredAtTime) < holdDuration;
+    }
+
+    public bool ShouldRotateFromContestedZone()
+    {
+        if (!IsInContestedZone())
+        {
+            return false;
+        }
+
+        if (hasCommittedToContestedRotation)
+        {
+            return false;
+        }
+
+        if (Time.time < contestedRotateBlockedUntilTime)
+        {
+            return false;
+        }
+
+        if (contestedEnteredAtTime < 0f)
+        {
+            contestedEnteredAtTime = Time.time;
+        }
+
+        float holdDuration = GetContestedHoldSeconds();
+        return (Time.time - contestedEnteredAtTime) >= holdDuration;
+    }
+
     public void HoldPositionInCurrentZone()
     {
+        if (navMeshAgent == null)
+        {
+            return;
+        }
+
         // Keep enemy in place while contested instead of continuing an old path out.
         navMeshAgent.isStopped = true;
         navMeshAgent.ResetPath();
@@ -126,6 +243,11 @@ public class Enemy : MonoBehaviour
 
     public void ResumeMovement()
     {
+        if (navMeshAgent == null)
+        {
+            return;
+        }
+
         navMeshAgent.isStopped = false;
     }
 
@@ -134,5 +256,83 @@ public class Enemy : MonoBehaviour
         if (navMeshAgent.pathPending) return false;
         if (navMeshAgent.remainingDistance > navMeshAgent.stoppingDistance) return false;
         return !navMeshAgent.hasPath || navMeshAgent.velocity.sqrMagnitude < MinIdleVelocitySquared;
+    }
+
+    private void CommitContestedRotation()
+    {
+        hasCommittedToContestedRotation = true;
+        contestedRotateBlockedUntilTime = Time.time + Mathf.Max(0f, contestedRotateCooldownSeconds);
+    }
+
+    private float GetContestedHoldSeconds()
+    {
+        if (zoneManager == null || zoneManager.zones.Count == 0)
+        {
+            return Mathf.Max(0f, contestedHoldSecondsWhenEven);
+        }
+
+        int enemyZones = 0;
+        int playerZones = 0;
+        foreach (Zone zone in zoneManager.zones)
+        {
+            if (zone == null)
+            {
+                continue;
+            }
+
+            if (zone.Owner == ZoneManager.ZoneOwner.Enemy)
+            {
+                enemyZones++;
+                continue;
+            }
+
+            if (zone.Owner == ZoneManager.ZoneOwner.Player)
+            {
+                playerZones++;
+            }
+        }
+
+        int leadDelta = enemyZones - playerZones;
+        int winningLeadThreshold = Mathf.Max(1, zoneLeadForWinningState);
+        if (leadDelta >= winningLeadThreshold)
+        {
+            return Mathf.Max(0f, contestedHoldSecondsWhenWinning);
+        }
+
+        if (leadDelta <= -winningLeadThreshold)
+        {
+            return Mathf.Max(0f, contestedHoldSecondsWhenLosing);
+        }
+
+        return Mathf.Max(0f, contestedHoldSecondsWhenEven);
+    }
+
+    private Zone GetClosestPlayerOwnedZone()
+    {
+        if (zoneManager == null)
+        {
+            return null;
+        }
+
+        Zone nearestZone = null;
+        float nearestDistance = float.MaxValue;
+        foreach (Zone zone in zoneManager.zones)
+        {
+            if (zone == null || zone.Owner != ZoneManager.ZoneOwner.Player)
+            {
+                continue;
+            }
+
+            float distance = Vector3.Distance(zone.transform.position, transform.position);
+            if (distance >= nearestDistance)
+            {
+                continue;
+            }
+
+            nearestDistance = distance;
+            nearestZone = zone;
+        }
+
+        return nearestZone;
     }
 }

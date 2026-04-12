@@ -13,6 +13,7 @@ public class Zone : MonoBehaviour
 
     private ZoneManager zoneManager;
     private MeshRenderer floorQuadRenderer;
+    private Material runtimeFloorMaterial;
     private GameObject activeFlagObject;
 
     private float halfSizeX;
@@ -47,7 +48,9 @@ public class Zone : MonoBehaviour
         collider.isTrigger = false;
 
         floorQuadRenderer = quadObject.GetComponent<MeshRenderer>();
-        floorQuadRenderer.material = zoneManager.GetFloorMaterial(ZoneManager.ZoneOwner.Neutral);
+        Material neutralMaterial = zoneManager.GetFloorMaterial(ZoneManager.ZoneOwner.Neutral);
+        runtimeFloorMaterial = new Material(neutralMaterial);
+        floorQuadRenderer.material = runtimeFloorMaterial;
     }
 
     // Sets the owner and updates floor/flag visuals.
@@ -60,7 +63,7 @@ public class Zone : MonoBehaviour
     // Applies floor material and owner-specific flag prefab.
     private void ApplyVisualsForCurrentOwner()
     {
-        floorQuadRenderer.material = zoneManager.GetFloorMaterial(owner);
+        ApplyOwnerColor();
 
         // Replaces the current flag object with this owner's prefab.
         if (activeFlagObject != null)
@@ -73,6 +76,47 @@ public class Zone : MonoBehaviour
         // Flag is 5cm above the floor.
         activeFlagObject.transform.localPosition = new Vector3(0f, 0.05f, 0f);
         activeFlagObject.transform.localRotation = Quaternion.identity;
+    }
+
+    public void ApplyCapturePreview(ZoneManager.ZoneOwner capturerOwner, float captureProgress)
+    {
+        if (runtimeFloorMaterial == null || zoneManager == null)
+        {
+            return;
+        }
+
+        Material ownerMaterial = zoneManager.GetFloorMaterial(owner);
+        Material capturerMaterial = zoneManager.GetFloorMaterial(capturerOwner);
+        if (ownerMaterial == null || capturerMaterial == null)
+        {
+            return;
+        }
+
+        float clampedProgress = Mathf.Clamp01(captureProgress);
+        runtimeFloorMaterial.color = Color.Lerp(ownerMaterial.color, capturerMaterial.color, clampedProgress);
+    }
+
+
+    public void ApplyOwnerColor()
+    {
+        if (runtimeFloorMaterial == null || zoneManager == null)
+        {
+            return;
+        }
+
+        Material ownerMaterial = zoneManager.GetFloorMaterial(owner);
+        if (ownerMaterial != null)
+        {
+            runtimeFloorMaterial.color = ownerMaterial.color;
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (runtimeFloorMaterial != null)
+        {
+            Destroy(runtimeFloorMaterial);
+        }
     }
 
     // Returns true when the world point lies inside this zone bounds.

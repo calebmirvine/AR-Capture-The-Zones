@@ -339,9 +339,19 @@ public class ZoneManager : MonoBehaviour
 
         if (zoneUnder == null)
         {
-            ownerState.progress = Mathf.Max(0f, ownerState.progress - (Time.deltaTime / drainRate));
+            if (ownerState.activeZone != null)
+            {
+                ownerState.progress = Mathf.Max(0f, ownerState.progress - (Time.deltaTime / drainRate));
+                ownerState.activeZone.ApplyCapturePreview(capturerOwner, ownerState.progress);
+            }
+
             if (ownerState.progress == 0f)
             {
+                if (ownerState.activeZone != null)
+                {
+                    ownerState.activeZone.ApplyOwnerColor();
+                }
+
                 ownerState.activeZone = null;
             }
 
@@ -353,6 +363,11 @@ public class ZoneManager : MonoBehaviour
             case ZoneOwner.Player:
                 if (capturerOwner == ZoneOwner.Player)
                 {
+                    if (ownerState.activeZone != null)
+                    {
+                        ownerState.activeZone.ApplyOwnerColor();
+                    }
+
                     ownerState.activeZone = null;
                     ownerState.progress = 0f;
                     return;
@@ -362,6 +377,11 @@ public class ZoneManager : MonoBehaviour
             case ZoneOwner.Enemy:
                 if (capturerOwner == ZoneOwner.Enemy)
                 {
+                    if (ownerState.activeZone != null)
+                    {
+                        ownerState.activeZone.ApplyOwnerColor();
+                    }
+
                     ownerState.activeZone = null;
                     ownerState.progress = 0f;
                     return;
@@ -378,11 +398,17 @@ public class ZoneManager : MonoBehaviour
 
         if (ownerState.activeZone != zoneUnder)
         {
+            if (ownerState.activeZone != null)
+            {
+                ownerState.activeZone.ApplyOwnerColor();
+            }
+
             ownerState.activeZone = zoneUnder;
             ownerState.progress = 0f;
         }
 
         ownerState.progress += Time.deltaTime / captureRate;
+        zoneUnder.ApplyCapturePreview(capturerOwner, ownerState.progress);
         if (ownerState.progress < 1f)
         {
             return;
@@ -398,6 +424,7 @@ public class ZoneManager : MonoBehaviour
             Messenger<Zone>.Broadcast(GameEvent.ENEMY_CAPTURED_ZONE, zoneUnder, MessengerMode.DONT_REQUIRE_LISTENER);
         }
 
+        zoneUnder.ApplyOwnerColor();
         ownerState.activeZone = null;
         ownerState.progress = 0f;
     }
