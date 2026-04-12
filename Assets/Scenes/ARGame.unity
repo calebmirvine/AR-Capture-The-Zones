@@ -201,7 +201,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 5022894}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1141252156}
+        m_TargetAssemblyTypeName: SettingsPopup, Assembly-CSharp
+        m_MethodName: OnMiscButton
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &5022894
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1225,7 +1237,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 198636296}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1141252156}
+        m_TargetAssemblyTypeName: SettingsPopup, Assembly-CSharp
+        m_MethodName: OnAudioButton
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &198636296
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1346,7 +1370,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 261343984}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1994450028}
+        m_TargetAssemblyTypeName: MiscPopup, Assembly-CSharp
+        m_MethodName: OnBackButton
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &261343984
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1747,7 +1783,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 427357829}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1141252156}
+        m_TargetAssemblyTypeName: SettingsPopup, Assembly-CSharp
+        m_MethodName: OnReturnToGameButton
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &427357829
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2652,7 +2700,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 50a9306e2a3c44a1190dab31b3665a71, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AudioPopup
-  settingsPopup: {fileID: 0}
+  settingsPopup: {fileID: 1141252156}
 --- !u!1 &843063353
 GameObject:
   m_ObjectHideFlags: 0
@@ -3011,7 +3059,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 928116796}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1141252156}
+        m_TargetAssemblyTypeName: SettingsPopup, Assembly-CSharp
+        m_MethodName: OnResetButton
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &928116796
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4704,7 +4764,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1706934066}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 821038611}
+        m_TargetAssemblyTypeName: AudioPopup, Assembly-CSharp
+        m_MethodName: OnBackButton
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1706934066
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5583,8 +5655,8 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 291404516}
-  - {fileID: 261343982}
   - {fileID: 1882385766}
+  - {fileID: 261343982}
   m_Father: {fileID: 988968035}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -5642,7 +5714,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 681e94c88ceab4d168ea021029463f16, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MiscPopup
-  settingsPopup: {fileID: 0}
+  settingsPopup: {fileID: 1141252156}
+  zoneManager: {fileID: 0}
+  toggleVibrationButton: {fileID: 0}
 --- !u!1 &2083647517
 GameObject:
   m_ObjectHideFlags: 0

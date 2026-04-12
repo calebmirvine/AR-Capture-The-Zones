@@ -24,7 +24,7 @@ public class ZoneManager : MonoBehaviour
 
     private NavMeshSurface runtimeNavMeshSurface;
 
-    [SerializeField] private float secondsToCapture = 3f;
+     [SerializeField] private float secondsToCapture = 3f;
     [SerializeField] private float secondsToDrain = 2f;
 
     public readonly List<Zone> zones = new List<Zone>();

@@ -8,4 +8,6 @@ public static class GameEvent {
     public const string POPUP_CLOSED = "POPUP_CLOSED";
     public const string GAME_ACTIVE = "GAME_ACTIVE";
     public const string GAME_INACTIVE = "GAME_INACTIVE";
+    public const string VIBRATION_ENABLED = "VIBRATION_ENABLED";
+    public const string VIBRATION_DISABLED = "VIBRATION_DISABLED";
 }
