@@ -8,12 +8,6 @@ public class MenuButton : MonoBehaviour
     {
         PlayNavigationSfx();
 
-        if (settingsPopup == null)
-        {
-            Debug.LogWarning("MenuButton settingsPopup reference is missing.");
-            return;
-        }
-
         if (settingsPopup.IsActive())
         {
             settingsPopup.Close();

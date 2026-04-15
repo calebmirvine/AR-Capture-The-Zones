@@ -90,6 +90,12 @@ public class SoundManager : MonoBehaviour
 
     private void ApplyMusicVolume()
     {
+        if (mixer == null)
+        {
+            Debug.LogWarning("SoundManager mixer reference is missing. Reassign the AudioMixer in the inspector.", this);
+            return;
+        }
+
         if (!musicPlaying)
         {
             mixer.SetFloat("MusicVolume", MUTE_DB);
@@ -101,6 +107,12 @@ public class SoundManager : MonoBehaviour
 
     private void ApplySfxVolume()
     {
+        if (mixer == null)
+        {
+            Debug.LogWarning("SoundManager mixer reference is missing. Reassign the AudioMixer in the inspector.", this);
+            return;
+        }
+
         if (!sfxPlaying)
         {
             mixer.SetFloat("SfxVolume", MUTE_DB);

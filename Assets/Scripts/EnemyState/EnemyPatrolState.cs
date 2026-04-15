@@ -17,12 +17,14 @@ public class EnemyPatrolState : EnemyStateMachineBehaviour
             return;
         }
 
+        agent.updateRotation = true;
         enemy.FindAndMoveToTarget();
     }
 
     override public void OnStateUpdate(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
         if (enemy == null || agent == null) return;
+        agent.updateRotation = true;
 
         if (enemy.ShouldForceIdle())
         {
@@ -53,6 +55,9 @@ public class EnemyPatrolState : EnemyStateMachineBehaviour
             if (!captureRequested)
             {
                 captureRequested = true;
+                // Freeze nav movement as soon as capture begins to avoid run->dance foot sliding.
+                enemy.HoldPositionInCurrentZone();
+                animator.SetFloat(SpeedParam, 0f);
             }
 
             animator.SetBool(CapturingParam, true);

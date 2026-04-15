@@ -24,8 +24,8 @@ public class UIManager : MonoBehaviour
 
     private void Awake()
     {
+        //Get the layer index 
         inGameUiLayer = LayerMask.NameToLayer(InGameUiLayerName);
-
 
         Messenger.AddListener(GameEvent.POPUP_OPENED, OnPopupOpened);
         Messenger.AddListener(GameEvent.POPUP_CLOSED, OnPopupClosed);
@@ -165,11 +165,6 @@ public class UIManager : MonoBehaviour
         enemyCapturedCount = 0;
         totalZones = 0;
 
-        if (zoneManager == null)
-        {
-            Debug.LogWarning("UIManager zoneManager reference is missing.");
-            return;
-        }
 
         totalZones = zoneManager.zones.Count;
         foreach (Zone zone in zoneManager.zones)
@@ -192,33 +187,16 @@ public class UIManager : MonoBehaviour
 
     private void UpdateScoreLabels()
     {
-        if (playerScore != null)
-        {
-            playerScore.text = string.Format(PlayerScoreLabelFormat, playerCapturedCount, totalZones);
-        }
-        else
-        {
-            Debug.LogWarning("UIManager playerScore reference is missing.");
-        }
-
-        if (enemyScore != null)
-        {
-            enemyScore.text = string.Format(EnemyScoreLabelFormat, enemyCapturedCount, totalZones);
-        }
-        else
-        {
-            Debug.LogWarning("UIManager enemyScore reference is missing.");
-        }
+   
+        playerScore.text = string.Format(PlayerScoreLabelFormat, playerCapturedCount, totalZones);
+    
+        enemyScore.text = string.Format(EnemyScoreLabelFormat, enemyCapturedCount, totalZones); 
+       
     }
 
     private void UpdateTimerLabel(float remainingSeconds)
     {
-        if (timerText == null)
-        {
-            Debug.LogWarning("UIManager timerText reference is missing.");
-            return;
-        }
-
+  
         int secondsRemaining = Mathf.CeilToInt(Mathf.Max(0f, remainingSeconds));
         int minutes = secondsRemaining / 60;
         int seconds = secondsRemaining % 60;

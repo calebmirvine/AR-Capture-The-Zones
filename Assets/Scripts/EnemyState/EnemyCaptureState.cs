@@ -13,6 +13,12 @@ public class EnemyCaptureState : EnemyStateMachineBehaviour
         animator.SetBool(CapturingParam, true);
         animator.SetInteger(DanceIdxParam, danceIndex);
 
+        if (enemy != null)
+        {
+            enemy.HoldPositionInCurrentZone();
+        }
+
+        animator.SetFloat(SpeedParam, 0f);
 
         if (agent != null)
         {
@@ -23,6 +29,12 @@ public class EnemyCaptureState : EnemyStateMachineBehaviour
     override public void OnStateUpdate(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
         if (enemy == null)
+        {
+            return;
+        }
+
+        // Prevent camera-facing rotation while blending out to patrol/idle.
+        if (animator.IsInTransition(layerIndex) || !animator.GetBool(CapturingParam))
         {
             return;
         }
@@ -41,6 +53,11 @@ public class EnemyCaptureState : EnemyStateMachineBehaviour
     override public void OnStateExit(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
         animator.SetBool(CapturingParam, false);
+
+        if (enemy != null)
+        {
+            enemy.ResumeMovement();
+        }
 
         if (agent != null)
         {
