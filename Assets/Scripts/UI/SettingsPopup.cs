@@ -7,24 +7,39 @@ public class SettingsPopup : BasePopup
 
     public void OnAudioButton()
     {
+        PlayNavigationSfx();
         audioPopup.Open();
         Close();
     }
 
     public void OnMiscButton()
     {
+        PlayNavigationSfx();
         miscPopup.Open();
         Close();
     }
 
     public void OnResetButton()
     {
-        Debug.Log("Reset clicked (not implemented yet).");
-        
+        PlayNavigationSfx();
+        SoundManager.Instance.StopMusic();
+
+        if (IsActive())
+        {
+            Close();
+        }
+
+        Messenger.Broadcast(GameEvent.GAME_RESET_REQUESTED, MessengerMode.DONT_REQUIRE_LISTENER);
     }
 
     public void OnReturnToGameButton()
     {
+        PlayNavigationSfx();
         Close();
+    }
+
+    private void PlayNavigationSfx()
+    {
+        SoundManager.Instance.PlaySfx(SoundLibrary.Instance.MenuNavSfx);
     }
 }

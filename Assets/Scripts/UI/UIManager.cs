@@ -30,6 +30,7 @@ public class UIManager : MonoBehaviour
         Messenger.AddListener(GameEvent.POPUP_OPENED, OnPopupOpened);
         Messenger.AddListener(GameEvent.POPUP_CLOSED, OnPopupClosed);
         Messenger.AddListener(GameEvent.GAMEPLAY_STARTED, OnGameplayStarted);
+        Messenger.AddListener(GameEvent.GAME_RESET_REQUESTED, OnGameResetRequested);
         Messenger<Zone>.AddListener(GameEvent.PLAYER_CAPTURED_ZONE, OnPlayerCapturedZone);
         Messenger<Zone>.AddListener(GameEvent.ENEMY_CAPTURED_ZONE, OnEnemyCapturedZone);
     }
@@ -39,6 +40,7 @@ public class UIManager : MonoBehaviour
         Messenger.RemoveListener(GameEvent.POPUP_OPENED, OnPopupOpened);
         Messenger.RemoveListener(GameEvent.POPUP_CLOSED, OnPopupClosed);
         Messenger.RemoveListener(GameEvent.GAMEPLAY_STARTED, OnGameplayStarted);
+        Messenger.RemoveListener(GameEvent.GAME_RESET_REQUESTED, OnGameResetRequested);
         Messenger<Zone>.RemoveListener(GameEvent.PLAYER_CAPTURED_ZONE, OnPlayerCapturedZone);
         Messenger<Zone>.RemoveListener(GameEvent.ENEMY_CAPTURED_ZONE, OnEnemyCapturedZone);
     }
@@ -106,6 +108,18 @@ public class UIManager : MonoBehaviour
         timeRemaining = Mathf.Max(0f, matchDurationSeconds);
         isMatchRunning = true;
         UpdateTimerLabel(timeRemaining);
+    }
+
+    private void OnGameResetRequested()
+    {
+        isMatchRunning = false;
+        popupsActive = 0;
+        timeRemaining = Mathf.Max(0f, matchDurationSeconds);
+        RefreshZoneCounts();
+        UpdateScoreLabels();
+        UpdateTimerLabel(timeRemaining);
+        SetChildrenActiveForLayer(inGameUiLayer, false);
+        SetGameActive(true);
     }
 
     private void SetChildrenActiveForLayer(int targetLayer, bool active)

@@ -34,6 +34,7 @@ public class ZoneManager : MonoBehaviour
     {
         Messenger<Transform, Vector2>.AddListener(GameEvent.FLOOR_CONFIRMED, OnFloorConfirmed);
         Messenger.AddListener(GameEvent.GAMEPLAY_STARTED, OnGameplayStartedNoOp);
+        Messenger.AddListener(GameEvent.GAME_RESET_REQUESTED, OnGameResetRequested);
         Messenger<Zone>.AddListener(GameEvent.ZONE_BECAME_NEUTRAL, OnZoneEventNoOp);
         Messenger<Zone>.AddListener(GameEvent.ZONE_BECAME_CONTESTED, OnZoneEventNoOp);
         Messenger<Zone>.AddListener(GameEvent.ZONE_BECAME_PLAYER, OnZoneEventNoOp);
@@ -46,6 +47,7 @@ public class ZoneManager : MonoBehaviour
     {
         Messenger<Transform, Vector2>.RemoveListener(GameEvent.FLOOR_CONFIRMED, OnFloorConfirmed);
         Messenger.RemoveListener(GameEvent.GAMEPLAY_STARTED, OnGameplayStartedNoOp);
+        Messenger.RemoveListener(GameEvent.GAME_RESET_REQUESTED, OnGameResetRequested);
         Messenger<Zone>.RemoveListener(GameEvent.ZONE_BECAME_NEUTRAL, OnZoneEventNoOp);
         Messenger<Zone>.RemoveListener(GameEvent.ZONE_BECAME_CONTESTED, OnZoneEventNoOp);
         Messenger<Zone>.RemoveListener(GameEvent.ZONE_BECAME_PLAYER, OnZoneEventNoOp);
@@ -68,6 +70,15 @@ public class ZoneManager : MonoBehaviour
     private void OnZoneEventNoOp(Zone zone)
     {
         _ = zone;
+    }
+
+    private void OnGameResetRequested()
+    {
+        ClearAllZones();
+        if (runtimeNavMeshSurface != null)
+        {
+            runtimeNavMeshSurface.RemoveData();
+        }
     }
 
     // Capture state for each owner

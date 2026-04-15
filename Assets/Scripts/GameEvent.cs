@@ -17,4 +17,5 @@ public static class GameEvent {
     public const string VIBRATION_ENABLED = "VIBRATION_ENABLED";
     public const string VIBRATION_DISABLED = "VIBRATION_DISABLED";
     public const string GAME_TIMER_EXPIRED = "GAME_TIMER_EXPIRED";
+    public const string GAME_RESET_REQUESTED = "GAME_RESET_REQUESTED";
 }

@@ -12,21 +12,26 @@ public class GameManager : MonoBehaviour
     [SerializeField] private ZoneManager zoneManager;
 
     [SerializeField] private GameObject enemyPrefab;
+    private GameObject activeEnemy;
 
     private void OnEnable()
     {
         Messenger.AddListener(GameEvent.GAMEPLAY_STARTED, OnGameplayStarted);
+        Messenger.AddListener(GameEvent.GAME_RESET_REQUESTED, OnGameResetRequested);
         Messenger<Zone>.AddListener(GameEvent.PLAYER_CAPTURED_ZONE, OnPlayerCapturedZone);
     }
 
     private void OnDisable()
     {
         Messenger.RemoveListener(GameEvent.GAMEPLAY_STARTED, OnGameplayStarted);
+        Messenger.RemoveListener(GameEvent.GAME_RESET_REQUESTED, OnGameResetRequested);
         Messenger<Zone>.RemoveListener(GameEvent.PLAYER_CAPTURED_ZONE, OnPlayerCapturedZone);
     }
 
     private void OnGameplayStarted()
     {
+        DestroyActiveEnemy();
+        SoundManager.Instance.PlayMusic(SoundLibrary.Instance.GameMusic);
         SpawnEnemyInRandomZone();
     }
 
@@ -46,8 +51,8 @@ public class GameManager : MonoBehaviour
                 continue;
             }
 
-            GameObject spawnedEnemyObject = Instantiate(enemyPrefab, navHit.position, Quaternion.identity);
-            Enemy spawnedEnemy = spawnedEnemyObject.GetComponentInChildren<Enemy>(true);
+            activeEnemy = Instantiate(enemyPrefab, navHit.position, Quaternion.identity);
+            Enemy spawnedEnemy = activeEnemy.GetComponentInChildren<Enemy>(true);
             if (spawnedEnemy != null)
             {
                 // Set the zone manager for the enemy, so it can access zones and navmesh state.
@@ -62,5 +67,21 @@ public class GameManager : MonoBehaviour
     {
         Debug.Log($"Player captured zone: {capturedZone.gameObject.name}; Vibrate Device");
         Handheld.Vibrate();
+    }
+
+    private void OnGameResetRequested()
+    {
+        DestroyActiveEnemy();
+    }
+
+    private void DestroyActiveEnemy()
+    {
+        if (activeEnemy == null)
+        {
+            return;
+        }
+
+        Destroy(activeEnemy);
+        activeEnemy = null;
     }
 }

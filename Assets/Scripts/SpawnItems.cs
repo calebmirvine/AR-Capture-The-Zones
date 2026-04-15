@@ -18,16 +18,26 @@ public class SpawnItems : MonoBehaviour
 
     private Coroutine spawnLoopCoroutine;
     private bool hasStartedSpawning;
+    private readonly List<GameObject> activePickups = new List<GameObject>();
 
     private void OnEnable()
     {
         Messenger.AddListener(GameEvent.GAMEPLAY_STARTED, OnGameplayStarted);
+        Messenger.AddListener(GameEvent.GAME_RESET_REQUESTED, OnGameResetRequested);
     }
 
     private void OnDisable()
     {
         Messenger.RemoveListener(GameEvent.GAMEPLAY_STARTED, OnGameplayStarted);
+        Messenger.RemoveListener(GameEvent.GAME_RESET_REQUESTED, OnGameResetRequested);
         StopSpawnLoop();
+        DestroyAllSpawnedPickups();
+    }
+
+    private void OnGameplayStarted()
+    {
+        DestroyAllSpawnedPickups();
+        SpawnInitialPickups();
     }
 
     public void SpawnInitialPickups()
@@ -39,6 +49,7 @@ public class SpawnItems : MonoBehaviour
 
         if (zoneManager == null || pickupPrefabs.Count == 0)
         {
+            Debug.LogError("Zone manager or pickup prefabs not set");
             return;
         }
 
@@ -66,7 +77,8 @@ public class SpawnItems : MonoBehaviour
             Vector3 spawnPosition = randomZone.GetRandomWorldPointInside();
             spawnPosition.y += spawnHeightOffset;
 
-            Instantiate(pickupPrefab, spawnPosition, Quaternion.identity);
+            GameObject spawnedPickup = Instantiate(pickupPrefab, spawnPosition, Quaternion.identity);
+            activePickups.Add(spawnedPickup);
 
             float nextDelay = Random.Range(lowDelay, highDelay);
             yield return new WaitForSeconds(nextDelay);
@@ -84,8 +96,24 @@ public class SpawnItems : MonoBehaviour
         hasStartedSpawning = false;
     }
 
-    private void OnGameplayStarted()
+    private void OnGameResetRequested()
     {
-        SpawnInitialPickups();
+        StopSpawnLoop();
+        DestroyAllSpawnedPickups();
+    }
+
+    private void DestroyAllSpawnedPickups()
+    {
+        foreach (GameObject activePickup in activePickups)
+        {
+            if (activePickup == null)
+            {
+                continue;
+            }
+
+            Destroy(activePickup);
+        }
+
+        activePickups.Clear();
     }
 }

@@ -6,6 +6,8 @@ public class MenuButton : MonoBehaviour
 
     public void OnMenuButton()
     {
+        PlayNavigationSfx();
+
         if (settingsPopup == null)
         {
             Debug.LogWarning("MenuButton settingsPopup reference is missing.");
@@ -19,5 +21,10 @@ public class MenuButton : MonoBehaviour
         }
 
         settingsPopup.Open();
+    }
+
+    private void PlayNavigationSfx()
+    {
+        SoundManager.Instance.PlaySfx(SoundLibrary.Instance.MenuNavSfx);
     }
 }

@@ -6,6 +6,8 @@ public class MiscPopup : BasePopup
 
     public void OnBackButton()
     {
+        PlayNavigationSfx();
+
         if (settingsPopup == null)
         {
             Debug.LogWarning("MiscPopup settingsPopup reference is missing.");
@@ -14,5 +16,10 @@ public class MiscPopup : BasePopup
 
         settingsPopup.Open();
         Close();
+    }
+
+    private void PlayNavigationSfx()
+    {
+        SoundManager.Instance.PlaySfx(SoundLibrary.Instance.MenuNavSfx);
     }
 }
