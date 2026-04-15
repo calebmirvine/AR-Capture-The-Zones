@@ -12,7 +12,7 @@ public class StartButtonController : MonoBehaviour
 
     private void OnEnable()
     {
-        SetConfirmButtonVisible(false);
+        confirmButton.gameObject.SetActive(false);
         Messenger.AddListener(GameEvent.GAME_RESET_REQUESTED, OnGameResetRequested);
     }
 
@@ -23,21 +23,12 @@ public class StartButtonController : MonoBehaviour
 
     private void Update()
     {
-        if (arPlaneManager == null)
-        {
-            return;
-        }
-
-        if (!arPlaneManager.enabled)
-        {
-            return;
-        }
 
         ARPlane largestPlane = GetLargestPlane();
         bool hasValidPlane = largestPlane != null &&
                              (largestPlane.size.x * largestPlane.size.y) >= minimumPlaneArea;
 
-        SetConfirmButtonVisible(hasValidPlane);
+        confirmButton.gameObject.SetActive(hasValidPlane);
     }
 
     public void OnConfirmScan()
@@ -59,7 +50,7 @@ public class StartButtonController : MonoBehaviour
         Transform planeTransform = planeToUse.transform;
         Vector2 planeSize = planeToUse.size;
 
-        SetConfirmButtonVisible(false);
+        confirmButton.gameObject.SetActive(false);
         foreach (ARPlane plane in arPlaneManager.trackables)
         {
             plane.gameObject.SetActive(false);
@@ -74,16 +65,9 @@ public class StartButtonController : MonoBehaviour
 
     private void OnGameResetRequested()
     {
-        if (arPlaneManager == null)
-        {
-            Debug.LogWarning("StartButtonController arPlaneManager reference is missing.");
-            return;
-        }
-
-        if (arSession != null)
-        {
+  
             arSession.Reset();
-        }
+  
 
         arPlaneManager.enabled = true;
         foreach (ARPlane plane in arPlaneManager.trackables)
@@ -91,7 +75,7 @@ public class StartButtonController : MonoBehaviour
             plane.gameObject.SetActive(true);
         }
 
-        SetConfirmButtonVisible(false);
+        confirmButton.gameObject.SetActive(false);
     }
 
     private ARPlane GetLargestPlane()
@@ -119,14 +103,4 @@ public class StartButtonController : MonoBehaviour
         SoundManager.Instance.PlaySfx(SoundLibrary.Instance.MenuNavSfx);
     }
 
-    private void SetConfirmButtonVisible(bool visible)
-    {
-        if (confirmButton == null)
-        {
-            Debug.LogWarning("StartButtonController confirmButton reference is missing.");
-            return;
-        }
-
-        confirmButton.gameObject.SetActive(visible);
-    }
 }

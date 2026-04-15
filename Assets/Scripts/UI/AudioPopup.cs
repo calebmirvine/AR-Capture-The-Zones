@@ -35,20 +35,22 @@ public class AudioPopup : BasePopup
     {
         //Music
         musicSlider.value = SoundManager.Instance.MusicVolume;
-        musicToggle.isOn = SoundManager.Instance.MusicPlaying;
+        musicToggle.SetIsOnWithoutNotify(SoundManager.Instance.MusicPlaying);
 
         //SFX
         sfxSlider.value = SoundManager.Instance.SfxVolume;
-        sfxToggle.isOn = SoundManager.Instance.SfxPlaying;
+        sfxToggle.SetIsOnWithoutNotify(SoundManager.Instance.SfxPlaying);
     }
 
     public void OnMusicPlayingToggleChanged(bool isPlaying)
     {
+        PlayNavigationSfx();
         SoundManager.Instance.MusicPlaying = isPlaying;
     }
 
     public void OnSfxPlayingToggleChanged(bool isPlaying)
     {
+        PlayNavigationSfx();
         SoundManager.Instance.SfxPlaying = isPlaying;
     }
 

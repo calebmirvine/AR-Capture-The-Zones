@@ -5,6 +5,7 @@ using UnityEngine.AI;
 public class GameManager : MonoBehaviour
 {
     private const float EnemySpawnSampleRadius = 0.75f;
+    private const string PP_VIBRATION_ENABLED = "VibrationEnabled";
 
     // Try to spawn the enemy in 6 random zones so we have a better chance of finding a valid zone.
     private const int EnemySpawnZoneAttempts = 6;
@@ -13,11 +14,19 @@ public class GameManager : MonoBehaviour
 
     [SerializeField] private GameObject enemyPrefab;
     private GameObject activeEnemy;
+    private bool vibrationEnabled = true;
+
+    private void Awake()
+    {
+        vibrationEnabled = PlayerPrefs.GetInt(PP_VIBRATION_ENABLED, 1) == 1;
+    }
 
     private void OnEnable()
     {
         Messenger.AddListener(GameEvent.GAMEPLAY_STARTED, OnGameplayStarted);
         Messenger.AddListener(GameEvent.GAME_RESET_REQUESTED, OnGameResetRequested);
+        Messenger.AddListener(GameEvent.VIBRATION_ENABLED, OnVibrationEnabled);
+        Messenger.AddListener(GameEvent.VIBRATION_DISABLED, OnVibrationDisabled);
         Messenger<Zone>.AddListener(GameEvent.PLAYER_CAPTURED_ZONE, OnPlayerCapturedZone);
     }
 
@@ -25,6 +34,8 @@ public class GameManager : MonoBehaviour
     {
         Messenger.RemoveListener(GameEvent.GAMEPLAY_STARTED, OnGameplayStarted);
         Messenger.RemoveListener(GameEvent.GAME_RESET_REQUESTED, OnGameResetRequested);
+        Messenger.RemoveListener(GameEvent.VIBRATION_ENABLED, OnVibrationEnabled);
+        Messenger.RemoveListener(GameEvent.VIBRATION_DISABLED, OnVibrationDisabled);
         Messenger<Zone>.RemoveListener(GameEvent.PLAYER_CAPTURED_ZONE, OnPlayerCapturedZone);
     }
 
@@ -65,7 +76,7 @@ public class GameManager : MonoBehaviour
 
     private void OnPlayerCapturedZone(Zone capturedZone)
     {
-        Debug.Log($"Player captured zone: {capturedZone.gameObject.name}; Vibrate Device");
+        // Messenger.Broadcast(GameEvent.PLAYER_CAPTURED_ZONE, capturedZone);
         Handheld.Vibrate();
     }
 
@@ -83,5 +94,17 @@ public class GameManager : MonoBehaviour
 
         Destroy(activeEnemy);
         activeEnemy = null;
+    }
+
+    private void OnVibrationEnabled()
+    {
+        vibrationEnabled = true;
+        PlayerPrefs.SetInt(PP_VIBRATION_ENABLED, 1);
+    }
+
+    private void OnVibrationDisabled()
+    {
+        vibrationEnabled = false;
+        PlayerPrefs.SetInt(PP_VIBRATION_ENABLED, 0);
     }
 }
