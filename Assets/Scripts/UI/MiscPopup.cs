@@ -43,8 +43,4 @@ public class MiscPopup : BasePopup
         vibrationToggle.SetIsOnWithoutNotify(isEnabled);
     }
 
-    private void PlayNavigationSfx()
-    {
-        SoundManager.Instance.PlaySfx(SoundLibrary.Instance.MenuNavSfx);
-    }
 }

@@ -9,8 +9,11 @@ public class ZoneManager : MonoBehaviour
     [SerializeField] private Transform mainCameraTransform;
 
 
-    [SerializeField] private readonly int columns = 3;
-    [SerializeField] private readonly int rows = 2;
+    private const int MinGridSize = 2;
+    private const int MaxGridSize = 4;
+
+    [SerializeField] private int columns = 3;
+    [SerializeField] private int rows = 2;
 
     [SerializeField] private Material floorMaterialPlayer;
     [SerializeField] private Material floorMaterialEnemy;
@@ -29,6 +32,32 @@ public class ZoneManager : MonoBehaviour
     [SerializeField] private readonly float secondsToDrain = 2f;
 
     public readonly List<Zone> zones = new List<Zone>();
+
+    public int Rows
+    {
+        get { return rows; }
+    }
+
+    public int Columns
+    {
+        get { return columns; }
+    }
+
+    public void SetRows(int value)
+    {
+        rows = Mathf.Clamp(value, MinGridSize, MaxGridSize);
+    }
+
+    public void SetColumns(int value)
+    {
+        columns = Mathf.Clamp(value, MinGridSize, MaxGridSize);
+    }
+
+    private void OnValidate()
+    {
+        rows = Mathf.Clamp(rows, MinGridSize, MaxGridSize);
+        columns = Mathf.Clamp(columns, MinGridSize, MaxGridSize);
+    }
 
     private void OnEnable()
     {

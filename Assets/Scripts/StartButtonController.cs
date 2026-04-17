@@ -12,11 +12,7 @@ public class StartButtonController : MonoBehaviour
 
     private void OnEnable()
     {
-        if (confirmButton != null)
-        {
-            confirmButton.gameObject.SetActive(false);
-        }
-
+        SetConfirmButtonVisible(false);
         Messenger.AddListener(GameEvent.GAME_RESET_REQUESTED, OnGameResetRequested);
     }
 
@@ -27,14 +23,13 @@ public class StartButtonController : MonoBehaviour
 
     private void Update()
     {
-        if (arPlaneManager == null || confirmButton == null)
+        if (arPlaneManager == null)
         {
             return;
         }
 
         if (!arPlaneManager.enabled)
         {
-            confirmButton.gameObject.SetActive(false);
             return;
         }
 
@@ -42,17 +37,12 @@ public class StartButtonController : MonoBehaviour
         bool hasValidPlane = largestPlane != null &&
                              (largestPlane.size.x * largestPlane.size.y) >= minimumPlaneArea;
 
-        confirmButton.gameObject.SetActive(hasValidPlane);
+        SetConfirmButtonVisible(hasValidPlane);
     }
 
     public void OnConfirmScan()
     {
         PlayNavigationSfx();
-
-        if (arPlaneManager == null || confirmButton == null)
-        {
-            return;
-        }
 
         ARPlane planeToUse = GetLargestPlane();
         if (planeToUse == null)
@@ -63,7 +53,7 @@ public class StartButtonController : MonoBehaviour
         Transform planeTransform = planeToUse.transform;
         Vector2 planeSize = planeToUse.size;
 
-        confirmButton.gameObject.SetActive(false);
+        SetConfirmButtonVisible(false);
         foreach (ARPlane plane in arPlaneManager.trackables)
         {
             plane.gameObject.SetActive(false);
@@ -78,35 +68,31 @@ public class StartButtonController : MonoBehaviour
 
     private void OnGameResetRequested()
     {
-        if (confirmButton != null)
+        if (arPlaneManager == null)
         {
-            confirmButton.gameObject.SetActive(false);
+            Debug.LogWarning("StartButtonController arPlaneManager reference is missing.");
+            return;
         }
 
         if (arSession != null)
         {
-            arSession.Reset();
-        }
-
-        if (arPlaneManager == null)
-        {
-            return;
+        arSession.Reset();
         }
 
         arPlaneManager.enabled = true;
-        foreach (ARPlane plane in arPlaneManager.trackables)
+        //.trackables is the live list of planes that are being tracked by the ARPlaneManager
+        foreach (ARPlane plane in arPlaneManager.trackables) 
         {
             plane.gameObject.SetActive(true);
         }
+
+        SetConfirmButtonVisible(false);
     }
 
+//A plane grows and shifts, we need to find the largest plane to use for the game
+//we compare all our little "patches" to find the largest one to use for the game
     private ARPlane GetLargestPlane()
     {
-        if (arPlaneManager == null)
-        {
-            return null;
-        }
-
         ARPlane largestPlane = null;
         float largestPlaneArea = 0f;
 
@@ -130,4 +116,14 @@ public class StartButtonController : MonoBehaviour
         SoundManager.Instance.PlaySfx(SoundLibrary.Instance.MenuNavSfx);
     }
 
+    private void SetConfirmButtonVisible(bool visible)
+    {
+        if (confirmButton == null)
+        {
+            Debug.LogWarning("StartButtonController confirmButton reference is missing.");
+            return;
+        }
+
+        confirmButton.gameObject.SetActive(visible);
+    }
 }

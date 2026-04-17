@@ -32,14 +32,4 @@ public class SettingsPopup : BasePopup
         Messenger.Broadcast(GameEvent.GAME_RESET_REQUESTED, MessengerMode.DONT_REQUIRE_LISTENER);
     }
 
-    public void OnReturnToGameButton()
-    {
-        PlayNavigationSfx();
-        Close();
-    }
-
-    private void PlayNavigationSfx()
-    {
-        SoundManager.Instance.PlaySfx(SoundLibrary.Instance.MenuNavSfx);
-    }
 }

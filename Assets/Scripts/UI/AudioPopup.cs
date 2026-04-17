@@ -54,8 +54,4 @@ public class AudioPopup : BasePopup
         SoundManager.Instance.SfxPlaying = isPlaying;
     }
 
-    private void PlayNavigationSfx()
-    {
-        SoundManager.Instance.PlaySfx(SoundLibrary.Instance.MenuNavSfx);
-    }
 }

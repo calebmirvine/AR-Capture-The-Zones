@@ -4,6 +4,7 @@ using TMPro;
 public class UIManager : MonoBehaviour
 {
     private const string InGameUiLayerName = "InGameUI";
+    private const string PreGameUiLayerName = "PreGameUI";
     [SerializeField] private TextMeshProUGUI playerScore;
     [SerializeField] private TextMeshProUGUI enemyScore;
     [SerializeField] private TextMeshProUGUI timerText;
@@ -18,6 +19,7 @@ public class UIManager : MonoBehaviour
     private float timeRemaining;
     private bool isMatchRunning;
     private int inGameUiLayer;
+    private int preGameUiLayer;
 
     private const string PlayerScoreLabelFormat = "P1: {0}/{1}";
     private const string EnemyScoreLabelFormat = "AI: {0}/{1}";
@@ -26,6 +28,7 @@ public class UIManager : MonoBehaviour
     {
         //Get the layer index 
         inGameUiLayer = LayerMask.NameToLayer(InGameUiLayerName);
+        preGameUiLayer = LayerMask.NameToLayer(PreGameUiLayerName);
 
         Messenger.AddListener(GameEvent.POPUP_OPENED, OnPopupOpened);
         Messenger.AddListener(GameEvent.POPUP_CLOSED, OnPopupClosed);
@@ -101,6 +104,7 @@ public class UIManager : MonoBehaviour
     private void OnGameplayStarted()
     {
         SetChildrenActiveForLayer(inGameUiLayer, true);
+        SetChildrenActiveForLayer(preGameUiLayer, false);
 
         RefreshZoneCounts();
         UpdateScoreLabels();
@@ -119,6 +123,7 @@ public class UIManager : MonoBehaviour
         UpdateScoreLabels();
         UpdateTimerLabel(timeRemaining);
         SetChildrenActiveForLayer(inGameUiLayer, false);
+        SetChildrenActiveForLayer(preGameUiLayer, true);
         SetGameActive(true);
     }
 
