@@ -7,12 +7,16 @@ public class SoundLibrary : MonoBehaviour
     //SFX
     [SerializeField] private AudioClip menuNavSfx;
     [SerializeField] private AudioClip victorySfx;
+    [SerializeField] private AudioClip playerZoneCaptureSfx;
+    [SerializeField] private AudioClip enemyZoneCaptureSfx;
 
     //Music
     [SerializeField] private AudioClip gameMusic;
 
     public AudioClip MenuNavSfx => menuNavSfx;
     public AudioClip VictorySfx => victorySfx;
+    public AudioClip PlayerZoneCaptureSfx => playerZoneCaptureSfx;
+    public AudioClip EnemyZoneCaptureSfx => enemyZoneCaptureSfx;
     public AudioClip GameMusic => gameMusic;
 
     private void Awake()

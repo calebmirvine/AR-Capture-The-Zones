@@ -8,6 +8,10 @@ public class ZoneManager : MonoBehaviour
 {
     [SerializeField] private Transform mainCameraTransform;
 
+    public Transform MainCameraTransform
+    {
+        get { return mainCameraTransform; }
+    }
 
     private const int MinGridSize = 2;
     private const int MaxGridSize = 4;
@@ -447,7 +451,20 @@ public class ZoneManager : MonoBehaviour
             ownerState.progress = 0f;
         }
 
-        ownerState.progress += Time.deltaTime / captureRate;
+        bool instantCaptureBuffActive =
+            capturerOwner == ZoneOwner.Player
+            && PickupEffects.Instance != null
+            && PickupEffects.Instance.IsInstantPlayerCaptureActive;
+
+        if (instantCaptureBuffActive)
+        {
+            ownerState.progress = 1f;
+        }
+        else
+        {
+            ownerState.progress += Time.deltaTime / captureRate;
+        }
+
         zoneUnder.ApplyCapturePreview(capturerOwner, ownerState.progress);
         if (ownerState.progress < 1f)
         {
@@ -509,6 +526,57 @@ public class ZoneManager : MonoBehaviour
                 Messenger<Zone>.Broadcast(GameEvent.ZONE_BECAME_ENEMY, zone, MessengerMode.DONT_REQUIRE_LISTENER);
                 break;
         }
+    }
+
+    // Swaps every Player zone with every Enemy zone. Neutral and Contested zones are untouched.
+    public void SwapPlayerAndEnemyZones()
+    {
+        List<Zone> playerZones = new List<Zone>();
+        List<Zone> enemyZones = new List<Zone>();
+        foreach (Zone zone in zones)
+        {
+            if (zone == null)
+            {
+                continue;
+            }
+
+            if (zone.Owner == ZoneOwner.Player)
+            {
+                playerZones.Add(zone);
+            }
+            else if (zone.Owner == ZoneOwner.Enemy)
+            {
+                enemyZones.Add(zone);
+            }
+        }
+
+        // Snapshot first so newly-flipped zones aren't re-swapped back on the second pass.
+        foreach (Zone zone in playerZones)
+        {
+            SetZoneOwner(zone, ZoneOwner.Enemy);
+        }
+
+        foreach (Zone zone in enemyZones)
+        {
+            SetZoneOwner(zone, ZoneOwner.Player);
+        }
+
+        // Keep the contested "previous owner" consistent with the swap so the
+        // contested zone resolves to the now-correct side once overlap ends.
+        if (activeContestedPreviousOwner == ZoneOwner.Player)
+        {
+            activeContestedPreviousOwner = ZoneOwner.Enemy;
+        }
+        else if (activeContestedPreviousOwner == ZoneOwner.Enemy)
+        {
+            activeContestedPreviousOwner = ZoneOwner.Player;
+        }
+
+        // Clear any in-progress captures so stale progress doesn't carry over onto flipped zones.
+        playerCaptureState.activeZone = null;
+        playerCaptureState.progress = 0f;
+        enemyCaptureState.activeZone = null;
+        enemyCaptureState.progress = 0f;
     }
 
     // Returns a random zone from all available zones.

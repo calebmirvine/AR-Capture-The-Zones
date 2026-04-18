@@ -14,7 +14,9 @@ public class SpawnItems : MonoBehaviour
 
     [SerializeField] private float maxSpawnDelay = 7f;
 
-    [SerializeField] private float spawnHeightOffset = 0.05f;
+    [SerializeField] private int maxActivePickups = 2;
+
+    [SerializeField] private float spawnHeightOffset = 0.5f;
 
     private Coroutine spawnLoopCoroutine;
     private bool hasStartedSpawning;
@@ -66,6 +68,15 @@ public class SpawnItems : MonoBehaviour
 
         while (true)
         {
+            // Drop destroyed (collected) pickups before enforcing the cap.
+            activePickups.RemoveAll(pickup => pickup == null);
+
+            if (activePickups.Count >= maxActivePickups)
+            {
+                yield return new WaitForSeconds(lowDelay);
+                continue;
+            }
+
             GameObject pickupPrefab = pickupPrefabs[Random.Range(0, pickupPrefabs.Count)];
             Zone randomZone = zoneManager.GetRandomNeutralFirstZone();
             if (randomZone == null)
@@ -78,6 +89,12 @@ public class SpawnItems : MonoBehaviour
             spawnPosition.y += spawnHeightOffset;
 
             GameObject spawnedPickup = Instantiate(pickupPrefab, spawnPosition, Quaternion.identity);
+            Pickup spawnedPickupComponent = spawnedPickup.GetComponent<Pickup>();
+            if (spawnedPickupComponent != null)
+            {
+                spawnedPickupComponent.Init(zoneManager);
+            }
+
             activePickups.Add(spawnedPickup);
 
             float nextDelay = Random.Range(lowDelay, highDelay);

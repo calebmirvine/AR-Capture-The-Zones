@@ -29,6 +29,11 @@ public class Enemy : MonoBehaviour
         get { return navMeshAgent; }
     }
 
+    public Animator Animator
+    {
+        get { return animator; }
+    }
+
     public Zone CurrentTargetZone
     {
         get { return activeTargetZone; }
