@@ -16,6 +16,13 @@ public class EnemyCaptureState : EnemyStateMachineBehaviour
     public override void OnStateUpdate(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
         TryTriggerAttackIfInRange(animator);
+
+        // Transitions out of capture require IsCapturing false before OnStateExit; Patrol/Chase SMBs
+        // do not run during this state, so we clear the bool when capture is no longer valid.
+        if (!enemy.IsInCapturableZone())
+        {
+            animator.SetBool(CapturingParam, false);
+        }
     }
 
     public override void OnStateExit(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)

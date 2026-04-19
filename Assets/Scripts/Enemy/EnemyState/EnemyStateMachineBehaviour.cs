@@ -13,6 +13,7 @@ public class EnemyStateMachineBehaviour : StateMachineBehaviour
     protected const string DanceIdxParam = "DanceIndex";
     protected const string SpeedParam = "Speed";
     protected const string AttackingParam = "Attacking";
+    protected const string IsAttackingParam = "IsAttacking";
 
     public override void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
@@ -41,6 +42,7 @@ public class EnemyStateMachineBehaviour : StateMachineBehaviour
         enemy.StopMovement();
         animator.SetFloat(SpeedParam, 0f);
         animator.SetBool(CapturingParam, false);
+        animator.SetBool(IsAttackingParam, false);
         if (fireIdleTrigger && !idleTransitionLatch)
         {
             idleTransitionLatch = true;
@@ -84,6 +86,7 @@ public class EnemyStateMachineBehaviour : StateMachineBehaviour
             return false;
         }
 
+        animator.SetBool(CapturingParam, false);
         animator.SetTrigger(AttackingParam);
         return true;
     }

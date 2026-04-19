@@ -31,13 +31,25 @@ public class Enemy : MonoBehaviour
 
     private void Start()
     {
-         GameObject playerObj = GameObject.FindGameObjectWithTag(PlayerTag);
-    
+        GameObject playerObj = GameObject.FindGameObjectWithTag(PlayerTag);
 
         Camera cam = playerObj.GetComponentInChildren<Camera>(true);
         playerPoint = cam != null ? cam.transform : playerObj.transform;
     }
 
+    private float HorizontalDistanceToPlayer()
+    {
+        if (playerPoint == null)
+        {
+            return float.PositiveInfinity;
+        }
+
+        Vector3 enemyWorldPosition = transform.position;
+        Vector3 playerWorldPosition = playerPoint.position;
+        float offsetOnXAxis = enemyWorldPosition.x - playerWorldPosition.x;
+        float offsetOnZAxis = enemyWorldPosition.z - playerWorldPosition.z;
+        return Mathf.Sqrt((offsetOnXAxis * offsetOnXAxis) + (offsetOnZAxis * offsetOnZAxis));
+    }
 
     public Zone GetZoneUnderFoot() => zoneManager.GetZoneAtWorldPosition(transform.position);
 
@@ -65,9 +77,7 @@ public class Enemy : MonoBehaviour
     {
         Zone zone = GetZoneUnderFoot();
 
-        return zone != null
-            && (ZoneManager.CanEnemyCapture(zone)
-                || zone.Owner == ZoneManager.ZoneOwner.Contested);
+        return zone != null && ZoneManager.CanEnemyCapture(zone);
     }
 
     public bool ShouldRotateFromContestedZone()
@@ -85,7 +95,7 @@ public class Enemy : MonoBehaviour
             return false;
         }
 
-        return Vector3.Distance(transform.position, playerPoint.position) <= chaseRange;
+        return HorizontalDistanceToPlayer() <= chaseRange;
     }
 
     public bool IsPlayerInAttackRange()
@@ -95,7 +105,7 @@ public class Enemy : MonoBehaviour
             return false;
         }
 
-        return Vector3.Distance(transform.position, playerPoint.position) <= attackRange;
+        return HorizontalDistanceToPlayer() <= attackRange;
     }
 
     public void StopMovement()
@@ -151,6 +161,16 @@ public class Enemy : MonoBehaviour
 
     private bool IsPatrolZoneStillValid(Zone zone)
     {
-        return ZoneManager.CanEnemyCapture(zone) || zone.Owner == ZoneManager.ZoneOwner.Contested;
+        return ZoneManager.CanEnemyCapture(zone);
+    }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, chaseRange);
+        Gizmos.color = Color.blue;
+        Gizmos.DrawWireSphere(transform.position, attackRange);
+        Gizmos.color = Color.green;
+        Gizmos.DrawWireSphere(transform.position, attackRangeStop);
     }
 }

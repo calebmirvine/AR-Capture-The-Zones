@@ -29,12 +29,12 @@ public class EnemyChaseState : EnemyStateMachineBehaviour
 
         enemy.ResumeMovement();
 
-        if (HandleCapturableZone(animator, ref captureRequested))
+        if (TryTriggerAttackIfInRange(animator))
         {
             return;
         }
 
-        if (TryTriggerAttackIfInRange(animator))
+        if (HandleCapturableZone(animator, ref captureRequested))
         {
             return;
         }

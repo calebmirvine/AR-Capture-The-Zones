@@ -16,7 +16,9 @@ public class EnemyIdleState : EnemyStateMachineBehaviour
         animator.SetBool(CapturingParam, false);
         animator.SetFloat(SpeedParam, 0f);
 
-        if (!enemy.IsZoneContestedWithPlayer() && enemy.IsInCapturableZone())
+        if (!enemy.IsZoneContestedWithPlayer()
+            && enemy.IsInCapturableZone()
+            && !enemy.IsPlayerInAttackRange())
         {
             captureRequested = true;
             enemy.StopMovement();
@@ -33,12 +35,12 @@ public class EnemyIdleState : EnemyStateMachineBehaviour
             return;
         }
 
-        if (HandleCapturableZone(animator, ref captureRequested))
+        if (TryTriggerAttackIfInRange(animator))
         {
             return;
         }
 
-        if (TryTriggerAttackIfInRange(animator))
+        if (HandleCapturableZone(animator, ref captureRequested))
         {
             return;
         }

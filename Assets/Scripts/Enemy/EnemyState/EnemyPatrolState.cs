@@ -17,7 +17,7 @@ public class EnemyPatrolState : EnemyStateMachineBehaviour
 
         agent.updateRotation = true;
 
-        if (enemy.IsInCapturableZone())
+        if (enemy.IsInCapturableZone() && !enemy.IsPlayerInAttackRange())
         {
             captureRequested = true;
             enemy.StopMovement();
@@ -42,12 +42,12 @@ public class EnemyPatrolState : EnemyStateMachineBehaviour
 
         enemy.ResumeMovement();
 
-        if (HandleCapturableZone(animator, ref captureRequested))
+        if (TryTriggerAttackIfInRange(animator))
         {
             return;
         }
 
-        if (TryTriggerAttackIfInRange(animator))
+        if (HandleCapturableZone(animator, ref captureRequested))
         {
             return;
         }
