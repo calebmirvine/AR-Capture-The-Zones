@@ -5,7 +5,6 @@ public abstract class Pickup : MonoBehaviour
     private const int GizmoCircleSegments = 48;
 
     [SerializeField] private float pickupRadius = 0.35f;
-    [SerializeField] private AudioClip pickupSound;
 
     private ZoneManager zoneManager;
     private bool hasBeenCollected;
@@ -61,9 +60,14 @@ public abstract class Pickup : MonoBehaviour
     {
         hasBeenCollected = true;
 
-        if (pickupSound != null)
+        SoundLibrary library = SoundLibrary.Instance;
+        if (library != null)
         {
-            SoundManager.Instance.PlaySfx(pickupSound);
+            AudioClip clip = library.DefaultPickupSfx;
+            if (clip != null)
+            {
+                SoundManager.Instance.PlaySfx(clip);
+            }
         }
 
         if (PickupEffects.Instance != null)
@@ -73,6 +77,8 @@ public abstract class Pickup : MonoBehaviour
 
         Destroy(gameObject);
     }
+
+    protected abstract PickupKind Kind { get; }
 
     protected abstract void RegisterPending();
 

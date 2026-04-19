@@ -1,6 +1,7 @@
 using UnityEngine;
 
-// Spawns particle + SFX feedback when a zone is captured.
+// Spawns particle feedback when a zone is captured.
+// SFX is played from ZoneManager (see PlayZoneCaptureSfx) so capture audio works without this component.
 // Listens to PLAYER_CAPTURED_ZONE and ENEMY_CAPTURED_ZONE from ZoneManager.
 public class ZoneCaptureFeedback : MonoBehaviour
 {
@@ -28,8 +29,7 @@ public class ZoneCaptureFeedback : MonoBehaviour
         SpawnFeedback(
             capturedZone,
             playerCaptureParticlePrefab,
-            zoneManager.MainCameraTransform,
-            SoundLibrary.Instance.PlayerZoneCaptureSfx);
+            zoneManager.MainCameraTransform);
     }
 
     private void OnEnemyCapturedZone(Zone capturedZone)
@@ -37,11 +37,10 @@ public class ZoneCaptureFeedback : MonoBehaviour
         SpawnFeedback(
             capturedZone,
             enemyCaptureParticlePrefab,
-            GameObject.FindWithTag("Enemy")?.transform,
-            SoundLibrary.Instance.EnemyZoneCaptureSfx);
+            GameObject.FindWithTag("Enemy")?.transform);
     }
 
-    private void SpawnFeedback(Zone capturedZone, GameObject particlePrefab, Transform actorTransform, AudioClip sfx)
+    private void SpawnFeedback(Zone capturedZone, GameObject particlePrefab, Transform actorTransform)
     {
         if (particlePrefab != null)
         {
@@ -60,11 +59,6 @@ public class ZoneCaptureFeedback : MonoBehaviour
                     actorTransform);
                 Destroy(actorParticle, particleLifetime);
             }
-        }
-
-        if (sfx != null)
-        {
-            SoundManager.Instance.PlaySfx(sfx);
         }
     }
 }

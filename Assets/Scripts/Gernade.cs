@@ -4,11 +4,8 @@ public class Gernade : MonoBehaviour
 
 {
     [SerializeField] public float delay = 3f;
-
     [SerializeField] public float explosionRadius = 5f;
-
     [SerializeField] public float explosionForce = 700f;
-
     [SerializeField] public GameObject explosionPrefab;
 
     float countdown;
@@ -34,6 +31,16 @@ public class Gernade : MonoBehaviour
 
     public void Explode()
     {
+        SoundLibrary library = SoundLibrary.Instance;
+        if (library != null)
+        {
+            AudioClip explosionSfx = library.GrenadeExplosionSfx;
+            if (explosionSfx != null)
+            {
+                SoundManager.Instance.PlaySfx(explosionSfx);
+            }
+        }
+
         //Explosion Effect
         GameObject explosion = Instantiate(explosionPrefab, transform.position, transform.rotation);
 

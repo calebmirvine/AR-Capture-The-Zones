@@ -85,6 +85,16 @@ public class HealthSystem : MonoBehaviour
             StopCoroutine(ghostCoroutine);
         }
 
+        SoundLibrary library = SoundLibrary.Instance;
+        if (library != null)
+        {
+            AudioClip deadSfx = library.PlayerDeadSfx;
+            if (deadSfx != null)
+            {
+                SoundManager.Instance.PlaySfx(deadSfx);
+            }
+        }
+
         isGhost = true;
         ghostTimeRemaining = ghostDurationSeconds;
         ghostCoroutine = StartCoroutine(GhostCountdown());

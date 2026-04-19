@@ -333,6 +333,7 @@ public class ZoneManager : MonoBehaviour
         SetZoneOwner(sharedZone, ZoneOwner.Player);
         if (previousOwner != ZoneOwner.Player)
         {
+            PlayZoneCaptureSfx(isPlayerCapture: true);
             Messenger<Zone>.Broadcast(GameEvent.PLAYER_CAPTURED_ZONE, sharedZone, MessengerMode.DONT_REQUIRE_LISTENER);
         }
 
@@ -487,10 +488,12 @@ public class ZoneManager : MonoBehaviour
         SetZoneOwner(zoneUnder, capturerOwner);
         if (capturerOwner == ZoneOwner.Player)
         {
+            PlayZoneCaptureSfx(isPlayerCapture: true);
             Messenger<Zone>.Broadcast(GameEvent.PLAYER_CAPTURED_ZONE, zoneUnder, MessengerMode.DONT_REQUIRE_LISTENER);
         }
         else if (capturerOwner == ZoneOwner.Enemy)
         {
+            PlayZoneCaptureSfx(isPlayerCapture: false);
             Messenger<Zone>.Broadcast(GameEvent.ENEMY_CAPTURED_ZONE, zoneUnder, MessengerMode.DONT_REQUIRE_LISTENER);
         }
 
@@ -508,6 +511,23 @@ public class ZoneManager : MonoBehaviour
         }
 
         return playerCaptureState;
+    }
+
+    private static void PlayZoneCaptureSfx(bool isPlayerCapture)
+    {
+        SoundLibrary library = SoundLibrary.Instance;
+        if (library == null)
+        {
+            return;
+        }
+
+        AudioClip clip = isPlayerCapture ? library.PlayerZoneCaptureSfx : library.EnemyZoneCaptureSfx;
+        if (clip == null || SoundManager.Instance == null)
+        {
+            return;
+        }
+
+        SoundManager.Instance.PlaySfx(clip);
     }
 
     private void SetZoneOwner(Zone zone, ZoneOwner newOwner)

@@ -14,6 +14,7 @@ public class StartButtonController : MonoBehaviour
     {
         SetConfirmButtonVisible(false);
         Messenger.AddListener(GameEvent.GAME_RESET_REQUESTED, OnGameResetRequested);
+        TryPlayScanningMusic();
     }
 
     private void OnDisable()
@@ -87,6 +88,24 @@ public class StartButtonController : MonoBehaviour
         }
 
         SetConfirmButtonVisible(false);
+        TryPlayScanningMusic();
+    }
+
+    private static void TryPlayScanningMusic()
+    {
+        SoundLibrary library = SoundLibrary.Instance;
+        if (library == null)
+        {
+            return;
+        }
+
+        AudioClip clip = library.ScanningMusic;
+        if (clip == null || SoundManager.Instance == null)
+        {
+            return;
+        }
+
+        SoundManager.Instance.PlayMusic(clip);
     }
 
 //A plane grows and shifts, we need to find the largest plane to use for the game

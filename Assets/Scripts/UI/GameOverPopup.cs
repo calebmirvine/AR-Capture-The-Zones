@@ -52,6 +52,16 @@ public class GameOverPopup : BasePopup
 
     public void ShowEnemyWinResult()
     {
+        SoundLibrary library = SoundLibrary.Instance;
+        if (library != null)
+        {
+            AudioClip winSfx = library.EnemyWinSfx;
+            if (winSfx != null)
+            {
+                SoundManager.Instance.PlaySfx(winSfx);
+            }
+        }
+
         ApplyResult(EnemyWinText, EnemyWinColor, false, true);
     }
 

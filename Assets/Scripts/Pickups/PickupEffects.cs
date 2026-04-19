@@ -14,7 +14,7 @@ public class PickupEffects : MonoBehaviour
 {
     public static PickupEffects Instance { get; private set; }
 
-    /// <summary>Extra time the active-pickup HUD stays visible after the gameplay effect ends.</summary>
+    // The pickup HUD will stay visible for a short time after the pickup is consumed.
     public const float ActivePickupHudLingerSeconds = 0.5f;
 
     private float instantCaptureExpireAt;
@@ -137,6 +137,16 @@ public class PickupEffects : MonoBehaviour
         if (!hasPending)
         {
             return false;
+        }
+
+        SoundLibrary library = SoundLibrary.Instance;
+        if (library != null)
+        {
+            AudioClip clip = library.GetPickupActivationSfx(pendingKind);
+            if (clip != null)
+            {
+                SoundManager.Instance.PlaySfx(clip);
+            }
         }
 
         switch (pendingKind)
