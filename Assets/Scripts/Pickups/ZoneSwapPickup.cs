@@ -2,14 +2,10 @@ using UnityEngine;
 
 public class ZoneSwapPickup : Pickup
 {
-    protected override void ApplyEffect()
-    {
-        if (ZoneManager == null)
-        {
-            Debug.LogWarning("ZoneSwapPickup collected but ZoneManager is null.");
-            return;
-        }
+    [SerializeField, Min(0f)] private float hudDisplaySeconds = 2f;
 
-        ZoneManager.SwapPlayerAndEnemyZones();
+    protected override void RegisterPending()
+    {
+        PickupEffects.Instance.SetPendingZoneSwap(ZoneManager, hudDisplaySeconds);
     }
 }

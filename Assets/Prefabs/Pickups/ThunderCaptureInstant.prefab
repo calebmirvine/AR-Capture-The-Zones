@@ -26,7 +26,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2de2c222b32b72b4885aa6fd8e8c8ec9, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.7
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2de2c222b32b72b4885aa6fd8e8c8ec9, type: 3}
       propertyPath: m_LocalPosition.z
@@ -81,7 +81,7 @@ PrefabInstance:
       addedObject: {fileID: -3801763123766608837}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 2de2c222b32b72b4885aa6fd8e8c8ec9, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 8342091366925389403}
+      addedObject: {fileID: 175099681030699037}
   m_SourcePrefab: {fileID: 100100000, guid: 2de2c222b32b72b4885aa6fd8e8c8ec9, type: 3}
 --- !u!1 &5225455176718880169 stripped
 GameObject:
@@ -103,7 +103,7 @@ MonoBehaviour:
   pickupRadius: 0.35
   pickupSound: {fileID: 0}
   durationSeconds: 5
---- !u!114 &8342091366925389403
+--- !u!114 &175099681030699037
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -114,18 +114,18 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 845c415f3181b4840ab566c40e714752, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Benjathemaker.SimpleGemsAnim
-  isRotating: 0
+  m_EditorClassIdentifier: 
+  isRotating: 1
   rotateX: 0
-  rotateY: 0
+  rotateY: 1
   rotateZ: 0
-  rotationSpeed: 90
-  isFloating: 0
-  useEasingForFloating: 0
-  floatHeight: 1
-  floatSpeed: 1
-  startScale: {x: 0, y: 0, z: 0}
-  endScale: {x: 0, y: 0, z: 0}
+  rotationSpeed: 66
+  isFloating: 1
+  useEasingForFloating: 1
+  floatHeight: 0.5
+  floatSpeed: 0.33
+  startScale: {x: 1, y: 1, z: 1}
+  endScale: {x: 1, y: 1, z: 1}
   isScaling: 0
   useEasingForScaling: 0
-  scaleLerpSpeed: 1
+  scaleLerpSpeed: 1.1

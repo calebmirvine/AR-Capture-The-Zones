@@ -2,13 +2,14 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Spawns pickup prefabs in random neutral zones while gameplay is active, up to <see cref="maxActivePickups"/>.
+/// </summary>
 public class SpawnItems : MonoBehaviour
 {
     [SerializeField] private ZoneManager zoneManager;
 
     [SerializeField] private List<GameObject> pickupPrefabs = new List<GameObject>();
-
-    [SerializeField] private float initialSpawnDelay = 5f;
 
     [SerializeField] private float minSpawnDelay = 3f;
 
@@ -16,14 +17,13 @@ public class SpawnItems : MonoBehaviour
 
     [SerializeField] private int maxActivePickups = 2;
 
-    [SerializeField] private float spawnHeightOffset = 0.5f;
-
     private Coroutine spawnLoopCoroutine;
     private bool hasStartedSpawning;
     private readonly List<GameObject> activePickups = new List<GameObject>();
 
     private void OnEnable()
     {
+        // GAME_RESET_REQUESTED stops the loop and clears pickups; GAMEPLAY_STARTED begins fresh.
         Messenger.AddListener(GameEvent.GAMEPLAY_STARTED, OnGameplayStarted);
         Messenger.AddListener(GameEvent.GAME_RESET_REQUESTED, OnGameResetRequested);
     }
@@ -44,14 +44,9 @@ public class SpawnItems : MonoBehaviour
 
     public void SpawnInitialPickups()
     {
+        // One coroutine per session; reset clears this via StopSpawnLoop.
         if (hasStartedSpawning)
         {
-            return;
-        }
-
-        if (zoneManager == null || pickupPrefabs.Count == 0)
-        {
-            Debug.LogError("Zone manager or pickup prefabs not set");
             return;
         }
 
@@ -61,8 +56,7 @@ public class SpawnItems : MonoBehaviour
 
     private IEnumerator SpawnLoop()
     {
-        yield return new WaitForSeconds(initialSpawnDelay);
-
+        // Normalize in case min/max are reversed in the inspector.
         float lowDelay = Mathf.Min(minSpawnDelay, maxSpawnDelay);
         float highDelay = Mathf.Max(minSpawnDelay, maxSpawnDelay);
 
@@ -79,6 +73,7 @@ public class SpawnItems : MonoBehaviour
 
             GameObject pickupPrefab = pickupPrefabs[Random.Range(0, pickupPrefabs.Count)];
             Zone randomZone = zoneManager.GetRandomNeutralFirstZone();
+            // No eligible zone yet — retry after a short wait instead of busy-looping.
             if (randomZone == null)
             {
                 yield return new WaitForSeconds(lowDelay);
@@ -86,8 +81,6 @@ public class SpawnItems : MonoBehaviour
             }
 
             Vector3 spawnPosition = randomZone.GetRandomWorldPointInside();
-            spawnPosition.y += spawnHeightOffset;
-
             GameObject spawnedPickup = Instantiate(pickupPrefab, spawnPosition, Quaternion.identity);
             Pickup spawnedPickupComponent = spawnedPickup.GetComponent<Pickup>();
             if (spawnedPickupComponent != null)

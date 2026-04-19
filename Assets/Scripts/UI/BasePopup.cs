@@ -10,10 +10,6 @@ public class BasePopup : MonoBehaviour
             this.gameObject.SetActive(true);
             Messenger.Broadcast(GameEvent.POPUP_OPENED);
         }
-        else
-        {
-            Debug.LogError(this + ".Open() – trying to open a popup that is active!");
-        }
     }
 
     virtual public void Close()
@@ -23,10 +19,6 @@ public class BasePopup : MonoBehaviour
         {
             this.gameObject.SetActive(false);
             Messenger.Broadcast(GameEvent.POPUP_CLOSED);
-        }
-        else
-        {
-            Debug.LogError(this + ".Close() – trying to close a popup that is not active!");
         }
     }
 

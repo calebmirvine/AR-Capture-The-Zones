@@ -8,22 +8,11 @@ public abstract class Pickup : MonoBehaviour
     [SerializeField] private AudioClip pickupSound;
 
     private ZoneManager zoneManager;
-    private Transform playerTransform;
     private bool hasBeenCollected;
 
     public void Init(ZoneManager manager)
     {
         zoneManager = manager;
-        if (zoneManager != null && zoneManager.MainCameraTransform != null)
-        {
-            playerTransform = zoneManager.MainCameraTransform;
-            return;
-        }
-
-        if (Camera.main != null)
-        {
-            playerTransform = Camera.main.transform;
-        }
     }
 
     protected ZoneManager ZoneManager
@@ -38,20 +27,17 @@ public abstract class Pickup : MonoBehaviour
             return;
         }
 
-        if (playerTransform == null)
+        if (HealthSystem.Instance.IsGhost)
         {
-            // Late binding in case the camera wasn't ready during Init.
-            if (Camera.main != null)
-            {
-                playerTransform = Camera.main.transform;
-            }
-            else
-            {
-                return;
-            }
+            return;
         }
 
-        Vector3 playerPosition = playerTransform.position;
+        if (PickupEffects.Instance.HasPendingPowerup)
+        {
+            return;
+        }
+
+        Vector3 playerPosition = zoneManager.MainCameraTransform.position;
         Vector3 pickupPosition = transform.position;
         float deltaX = playerPosition.x - pickupPosition.x;
         float deltaZ = playerPosition.z - pickupPosition.z;
@@ -68,16 +54,16 @@ public abstract class Pickup : MonoBehaviour
     {
         hasBeenCollected = true;
 
-        if (pickupSound != null && SoundManager.Instance != null)
+        if (pickupSound != null)
         {
             SoundManager.Instance.PlaySfx(pickupSound);
         }
 
-        ApplyEffect();
+        RegisterPending();
         Destroy(gameObject);
     }
 
-    protected abstract void ApplyEffect();
+    protected abstract void RegisterPending();
 
     // Editor-only visualization of the XZ pickup radius so designers can tune it in the Scene view.
     private void OnDrawGizmos()

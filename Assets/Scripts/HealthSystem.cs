@@ -1,0 +1,137 @@
+using System;
+using System.Collections;
+using UnityEngine;
+
+public class HealthSystem : MonoBehaviour
+{
+    public static HealthSystem Instance { get; private set; }
+
+    [SerializeField] private int maxHealth = 3;
+    [SerializeField] private float ghostDurationSeconds = 8f;
+    [SerializeField] private float spawnInvulnerabilitySeconds = 1.5f;
+
+    private int currentHealth;
+    private bool isGhost;
+    private float ghostTimeRemaining;
+    private Coroutine ghostCoroutine;
+    private float invulnerableUntilTime;
+
+    public int CurrentHealth
+    {
+        get
+        {
+            return currentHealth;
+        }
+    }
+
+    public int MaxHealth
+    {
+        get
+        {
+            return maxHealth;
+        }
+    }
+
+    public float HealthNormalized => (float)currentHealth / maxHealth;
+
+    public event Action<float> OnHealthChanged;
+
+    public bool IsGhost
+    {
+        get
+        {
+            return isGhost;
+        }
+    }
+
+    public float GhostTimeRemaining
+    {
+        get
+        {
+            return ghostTimeRemaining;
+        }
+    }
+
+    private void Awake()
+    {
+        Instance = this;
+        maxHealth = Mathf.Max(1, maxHealth);
+        currentHealth = maxHealth;
+        invulnerableUntilTime = Time.time + spawnInvulnerabilitySeconds;
+    }
+
+    private void Start()
+    {
+        NotifyHealthChanged();
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+        {
+            Instance = null;
+        }
+    }
+
+    public void TakeDamage(int damage)
+    {
+        if (isGhost || damage <= 0)
+        {
+            return;
+        }
+
+        if (Time.time < invulnerableUntilTime)
+        {
+            return;
+        }
+
+        currentHealth -= damage;
+        Debug.Log($"Took {damage} damage, health remaining: {currentHealth}");
+
+        if (currentHealth > 0)
+        {
+            NotifyHealthChanged();
+            return;
+        }
+
+        currentHealth = 0;
+        NotifyHealthChanged();
+        EnterGhostMode();
+    }
+
+    private void NotifyHealthChanged()
+    {
+        OnHealthChanged?.Invoke(HealthNormalized);
+    }
+
+    private void EnterGhostMode()
+    {
+        if (ghostCoroutine != null)
+        {
+            StopCoroutine(ghostCoroutine);
+        }
+
+        isGhost = true;
+        ghostTimeRemaining = ghostDurationSeconds;
+        ghostCoroutine = StartCoroutine(GhostCountdown());
+    }
+
+    private IEnumerator GhostCountdown()
+    {
+        float duration = ghostDurationSeconds;
+        ghostTimeRemaining = duration;
+
+        while (ghostTimeRemaining > 0f)
+        {
+            ghostTimeRemaining -= Time.deltaTime;
+            yield return null;
+        }
+
+        ghostTimeRemaining = 0f;
+        isGhost = false;
+        currentHealth = maxHealth;
+        invulnerableUntilTime = Time.time + spawnInvulnerabilitySeconds;
+        NotifyHealthChanged();
+        ghostCoroutine = null;
+    }
+}

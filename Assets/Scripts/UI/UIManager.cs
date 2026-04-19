@@ -8,8 +8,9 @@ public class UIManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI playerScore;
     [SerializeField] private TextMeshProUGUI enemyScore;
     [SerializeField] private TextMeshProUGUI timerText;
+    [SerializeField] private GameOverPopup gameOverPopup;
     [SerializeField] private ZoneManager zoneManager;
-    [SerializeField] private float matchDurationSeconds = 60f;
+    private float matchDurationSeconds = ConfigPopup.DefaultGameTimeSeconds;
 
     private int popupsActive;
     private int playerCapturedCount;
@@ -34,6 +35,10 @@ public class UIManager : MonoBehaviour
         Messenger.AddListener(GameEvent.POPUP_CLOSED, OnPopupClosed);
         Messenger.AddListener(GameEvent.GAMEPLAY_STARTED, OnGameplayStarted);
         Messenger.AddListener(GameEvent.GAME_RESET_REQUESTED, OnGameResetRequested);
+        Messenger<Zone>.AddListener(GameEvent.ZONE_BECAME_NEUTRAL, OnZoneOwnershipChanged);
+        Messenger<Zone>.AddListener(GameEvent.ZONE_BECAME_CONTESTED, OnZoneOwnershipChanged);
+        Messenger<Zone>.AddListener(GameEvent.ZONE_BECAME_PLAYER, OnZoneOwnershipChanged);
+        Messenger<Zone>.AddListener(GameEvent.ZONE_BECAME_ENEMY, OnZoneOwnershipChanged);
         Messenger<Zone>.AddListener(GameEvent.PLAYER_CAPTURED_ZONE, OnPlayerCapturedZone);
         Messenger<Zone>.AddListener(GameEvent.ENEMY_CAPTURED_ZONE, OnEnemyCapturedZone);
     }
@@ -44,6 +49,10 @@ public class UIManager : MonoBehaviour
         Messenger.RemoveListener(GameEvent.POPUP_CLOSED, OnPopupClosed);
         Messenger.RemoveListener(GameEvent.GAMEPLAY_STARTED, OnGameplayStarted);
         Messenger.RemoveListener(GameEvent.GAME_RESET_REQUESTED, OnGameResetRequested);
+        Messenger<Zone>.RemoveListener(GameEvent.ZONE_BECAME_NEUTRAL, OnZoneOwnershipChanged);
+        Messenger<Zone>.RemoveListener(GameEvent.ZONE_BECAME_CONTESTED, OnZoneOwnershipChanged);
+        Messenger<Zone>.RemoveListener(GameEvent.ZONE_BECAME_PLAYER, OnZoneOwnershipChanged);
+        Messenger<Zone>.RemoveListener(GameEvent.ZONE_BECAME_ENEMY, OnZoneOwnershipChanged);
         Messenger<Zone>.RemoveListener(GameEvent.PLAYER_CAPTURED_ZONE, OnPlayerCapturedZone);
         Messenger<Zone>.RemoveListener(GameEvent.ENEMY_CAPTURED_ZONE, OnEnemyCapturedZone);
     }
@@ -53,7 +62,7 @@ public class UIManager : MonoBehaviour
         SetGameActive(true);
         RefreshZoneCounts();
         UpdateScoreLabels();
-        UpdateTimerLabel(matchDurationSeconds);
+        UpdateTimerLabel(Mathf.Max(0f, matchDurationSeconds));
     }
 
     private void Update()
@@ -63,15 +72,24 @@ public class UIManager : MonoBehaviour
             return;
         }
 
-        timeRemaining -= Time.deltaTime;
-        if (timeRemaining <= 0f)
+        if (IsUntimedMode())
         {
-            timeRemaining = 0f;
-            isMatchRunning = false;
-            Messenger.Broadcast(GameEvent.GAME_TIMER_EXPIRED, MessengerMode.DONT_REQUIRE_LISTENER);
+            if (AreAllZonesOwned())
+            {
+                EndMatchAndBroadcastResult();
+            }
         }
+        else
+        {
+            timeRemaining -= Time.deltaTime;
+            if (timeRemaining <= 0f)
+            {
+                timeRemaining = 0f;
+                EndMatchAndBroadcastResult();
+            }
 
-        UpdateTimerLabel(timeRemaining);
+            UpdateTimerLabel(timeRemaining);
+        }
     }
 
     private void OnPopupOpened()
@@ -85,15 +103,7 @@ public class UIManager : MonoBehaviour
 
     private void OnPopupClosed()
     {
-        if (popupsActive > 0)
-        {
-            popupsActive--;
-        }
-        else
-        {
-            popupsActive = 0;
-            Debug.LogWarning("UIManager received POPUP_CLOSED with no active popups.");
-        }
+        popupsActive = Mathf.Max(0, popupsActive - 1);
 
         if (popupsActive == 0)
         {
@@ -127,26 +137,43 @@ public class UIManager : MonoBehaviour
         SetGameActive(true);
     }
 
-    private void SetChildrenActiveForLayer(int targetLayer, bool active)
+    public void SetMatchDurationSeconds(float value)
     {
-        if (targetLayer < 0)
+        matchDurationSeconds = Mathf.Max(0f, value);
+
+        if (!isMatchRunning)
         {
+            UpdateTimerLabel(matchDurationSeconds);
             return;
         }
 
-        SetChildrenActiveForLayerRecursive(transform, targetLayer, active);
+        if (IsUntimedMode())
+        {
+            timeRemaining = 0f;
+            UpdateTimerLabel(timeRemaining);
+            return;
+        }
+
+        timeRemaining = Mathf.Max(0f, matchDurationSeconds);
+        UpdateTimerLabel(timeRemaining);
     }
 
-    private void SetChildrenActiveForLayerRecursive(Transform current, int targetLayer, bool active)
+    private void SetChildrenActiveForLayer(int targetLayer, bool active)
     {
-        foreach (Transform child in current)
-        {
-            if (child.gameObject.layer == targetLayer)
-            {
-                child.gameObject.SetActive(active);
-            }
+        ApplyLayerToHierarchy(transform, targetLayer, active);
+    }
 
-            SetChildrenActiveForLayerRecursive(child, targetLayer, active);
+    // Toggles every object in the subtree whose GameObject.layer matches (use Unity Layer "InGameUI", not the Tag field).
+    private static void ApplyLayerToHierarchy(Transform root, int targetLayer, bool active)
+    {
+        if (root.gameObject.layer == targetLayer)
+        {
+            root.gameObject.SetActive(active);
+        }
+
+        foreach (Transform child in root)
+        {
+            ApplyLayerToHierarchy(child, targetLayer, active);
         }
     }
 
@@ -164,6 +191,13 @@ public class UIManager : MonoBehaviour
         UpdateScoreLabels();
     }
 
+    private void OnZoneOwnershipChanged(Zone changedZone)
+    {
+        _ = changedZone;
+        RefreshZoneCounts();
+        UpdateScoreLabels();
+    }
+
     private void RefreshZoneCounts()
     {
         playerCapturedCount = 0;
@@ -174,11 +208,6 @@ public class UIManager : MonoBehaviour
         totalZones = zoneManager.zones.Count;
         foreach (Zone zone in zoneManager.zones)
         {
-            if (zone == null)
-            {
-                continue;
-            }
-
             if (zone.Owner == ZoneManager.ZoneOwner.Player)
             {
                 playerCapturedCount++;
@@ -206,6 +235,53 @@ public class UIManager : MonoBehaviour
         int minutes = secondsRemaining / 60;
         int seconds = secondsRemaining % 60;
         timerText.text = $"{minutes}:{seconds:00}";
+    }
+
+    private bool IsUntimedMode()
+    {
+        return Mathf.Approximately(matchDurationSeconds, 0f);
+    }
+
+    private bool AreAllZonesOwned()
+    {
+        if (zoneManager.zones.Count == 0)
+        {
+            return false;
+        }
+
+        foreach (Zone zone in zoneManager.zones)
+        {
+            if (zone.Owner != ZoneManager.ZoneOwner.Player && zone.Owner != ZoneManager.ZoneOwner.Enemy)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private void EndMatchAndBroadcastResult()
+    {
+        RefreshZoneCounts();
+        UpdateScoreLabels();
+        isMatchRunning = false;
+        BroadcastMatchResult();
+    }
+
+    private void BroadcastMatchResult()
+    {
+        if (playerCapturedCount > enemyCapturedCount)
+        {
+            gameOverPopup.ShowPlayerWinResult();
+        }
+        else if (enemyCapturedCount > playerCapturedCount)
+        {
+            gameOverPopup.ShowEnemyWinResult();
+        }
+        else
+        {
+            gameOverPopup.ShowTieResult();
+        }
     }
 
     public void SetGameActive(bool active)

@@ -26,7 +26,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 0136abae75221dc4e8e1ba4f9d24c63b, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.7
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 0136abae75221dc4e8e1ba4f9d24c63b, type: 3}
       propertyPath: m_LocalPosition.z
@@ -78,14 +78,14 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 0136abae75221dc4e8e1ba4f9d24c63b, type: 3}
       insertIndex: -1
-      addedObject: {fileID: -122097668938615939}
+      addedObject: {fileID: -8859536856927171004}
   m_SourcePrefab: {fileID: 100100000, guid: 0136abae75221dc4e8e1ba4f9d24c63b, type: 3}
 --- !u!1 &8864624805005668522 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 0136abae75221dc4e8e1ba4f9d24c63b, type: 3}
   m_PrefabInstance: {fileID: 8630041043812191739}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &-122097668938615939
+--- !u!114 &-8859536856927171004
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -96,18 +96,18 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 845c415f3181b4840ab566c40e714752, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Benjathemaker.SimpleGemsAnim
-  isRotating: 0
+  m_EditorClassIdentifier: 
+  isRotating: 1
   rotateX: 0
-  rotateY: 0
+  rotateY: 1
   rotateZ: 0
-  rotationSpeed: 90
-  isFloating: 0
-  useEasingForFloating: 0
-  floatHeight: 1
-  floatSpeed: 1
-  startScale: {x: 0, y: 0, z: 0}
-  endScale: {x: 0, y: 0, z: 0}
+  rotationSpeed: 66
+  isFloating: 1
+  useEasingForFloating: 1
+  floatHeight: 0.5
+  floatSpeed: 0.33
+  startScale: {x: 1, y: 1, z: 1}
+  endScale: {x: 1, y: 1, z: 1}
   isScaling: 0
   useEasingForScaling: 0
-  scaleLerpSpeed: 1
+  scaleLerpSpeed: 1.1

@@ -26,7 +26,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: b69ab7dc4a09f094885bf950a65c44c3, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.7
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: b69ab7dc4a09f094885bf950a65c44c3, type: 3}
       propertyPath: m_LocalPosition.z
@@ -42,11 +42,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: b69ab7dc4a09f094885bf950a65c44c3, type: 3}
       propertyPath: m_LocalRotation.y
-      value: -0
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: b69ab7dc4a09f094885bf950a65c44c3, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: b69ab7dc4a09f094885bf950a65c44c3, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -74,7 +74,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: b69ab7dc4a09f094885bf950a65c44c3, type: 3}
       propertyPath: m_TagString
-      value: Pickup
+      value: Untagged
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -82,17 +82,17 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: b69ab7dc4a09f094885bf950a65c44c3, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 8317102002441752916}
+      addedObject: {fileID: 4119078961630793708}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: b69ab7dc4a09f094885bf950a65c44c3, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 7496543237516598866}
+      addedObject: {fileID: 3612236491530116285}
   m_SourcePrefab: {fileID: 100100000, guid: b69ab7dc4a09f094885bf950a65c44c3, type: 3}
 --- !u!1 &9021979860543945138 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: b69ab7dc4a09f094885bf950a65c44c3, type: 3}
   m_PrefabInstance: {fileID: 8211728087281173731}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &8317102002441752916
+--- !u!114 &4119078961630793708
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -108,17 +108,17 @@ MonoBehaviour:
   rotateX: 0
   rotateY: 1
   rotateZ: 0
-  rotationSpeed: 85.67
+  rotationSpeed: 66
   isFloating: 1
   useEasingForFloating: 1
-  floatHeight: 0.33
-  floatSpeed: 0.4
+  floatHeight: 0.5
+  floatSpeed: 0.33
   startScale: {x: 1, y: 1, z: 1}
   endScale: {x: 1, y: 1, z: 1}
   isScaling: 0
   useEasingForScaling: 0
-  scaleLerpSpeed: 1.11
---- !u!114 &7496543237516598866
+  scaleLerpSpeed: 1.1
+--- !u!114 &3612236491530116285
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

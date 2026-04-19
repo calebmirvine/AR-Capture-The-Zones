@@ -6,6 +6,8 @@ using Unity.AI.Navigation;
 // After floor confirm: spawns zones, optional grid lines, and reads player position from the assigned Main Camera.
 public class ZoneManager : MonoBehaviour
 {
+    private const float MinCaptureSeconds = 0.1f;
+
     [SerializeField] private Transform mainCameraTransform;
 
     public Transform MainCameraTransform
@@ -57,10 +59,22 @@ public class ZoneManager : MonoBehaviour
         columns = Mathf.Clamp(value, MinGridSize, MaxGridSize);
     }
 
+    public void SetPlayerSecondsToCapture(float value)
+    {
+        playerSecondsToCapture = Mathf.Max(MinCaptureSeconds, value);
+    }
+
+    public void SetEnemySecondsToCapture(float value)
+    {
+        enemySecondsToCapture = Mathf.Max(MinCaptureSeconds, value);
+    }
+
     private void OnValidate()
     {
         rows = Mathf.Clamp(rows, MinGridSize, MaxGridSize);
         columns = Mathf.Clamp(columns, MinGridSize, MaxGridSize);
+        playerSecondsToCapture = Mathf.Max(MinCaptureSeconds, playerSecondsToCapture);
+        enemySecondsToCapture = Mathf.Max(MinCaptureSeconds, enemySecondsToCapture);
     }
 
     private void OnEnable()
@@ -279,14 +293,38 @@ public class ZoneManager : MonoBehaviour
         return null;
     }
 
+    // True when enemy-held zones are strictly more than half of the grid (neutrals count in total).
+    public bool EnemyControlsMajorityOfGrid()
+    {
+        if (zones == null || zones.Count == 0)
+        {
+            return false;
+        }
+
+        int enemyCount = 0;
+        foreach (Zone zone in zones)
+        {
+            if (zone != null && zone.Owner == ZoneOwner.Enemy)
+            {
+                enemyCount++;
+            }
+        }
+
+        return enemyCount * 2 > zones.Count;
+    }
+
+    private static bool IsPlayerDead()
+    {
+        return HealthSystem.Instance != null && HealthSystem.Instance.IsGhost;
+    }
+
     // Updates zone capture and drain progress each frame.
     private void Update()
     {
-        const float minCapture = 0.1f;
         // Clamp durations so capture math never divides by zero.
-        float playerCaptureRate = Mathf.Max(playerSecondsToCapture, minCapture);
-        float enemyCaptureRate = Mathf.Max(enemySecondsToCapture, minCapture);
-        float drainRate = Mathf.Max(secondsToDrain, minCapture);
+        float playerCaptureRate = Mathf.Max(playerSecondsToCapture, MinCaptureSeconds);
+        float enemyCaptureRate = Mathf.Max(enemySecondsToCapture, MinCaptureSeconds);
+        float drainRate = Mathf.Max(secondsToDrain, MinCaptureSeconds);
 
         // Resolve the player's current zone from the assigned AR Main Camera transform.
         Zone playerZone;
@@ -321,6 +359,11 @@ public class ZoneManager : MonoBehaviour
             sharedZone = null;
         }
 
+        if (TryResolveInstantContestedCapture(sharedZone))
+        {
+            return;
+        }
+
         UpdateContestedVisualState(sharedZone);
 
         // If both are in the same zone, that zone is contested and capture is paused.
@@ -329,9 +372,11 @@ public class ZoneManager : MonoBehaviour
             return;
         }
 
+        Zone playerZoneForCapture = IsPlayerDead() ? null : playerZone;
+
         UpdateCaptureForOwner(
             ZoneOwner.Player,
-            playerZone,
+            playerZoneForCapture,
             playerCaptureRate,
             drainRate);
 
@@ -341,6 +386,50 @@ public class ZoneManager : MonoBehaviour
             enemyZone,
             enemyCaptureRate,
             drainRate);
+    }
+
+    private bool TryResolveInstantContestedCapture(Zone sharedZone)
+    {
+        if (sharedZone == null)
+        {
+            return false;
+        }
+
+        if (IsPlayerDead())
+        {
+            return false;
+        }
+
+        if (PickupEffects.Instance == null || !PickupEffects.Instance.IsInstantPlayerCaptureActive)
+        {
+            return false;
+        }
+
+        ZoneOwner previousOwner = sharedZone.Owner;
+        SetZoneOwner(sharedZone, ZoneOwner.Player);
+        if (previousOwner != ZoneOwner.Player)
+        {
+            Messenger<Zone>.Broadcast(GameEvent.PLAYER_CAPTURED_ZONE, sharedZone, MessengerMode.DONT_REQUIRE_LISTENER);
+        }
+
+        sharedZone.ApplyOwnerColor();
+
+        activeContestedZone = null;
+        activeContestedPreviousOwner = ZoneOwner.Neutral;
+
+        if (playerCaptureState.activeZone == sharedZone)
+        {
+            playerCaptureState.activeZone = null;
+        }
+
+        if (enemyCaptureState.activeZone == sharedZone)
+        {
+            enemyCaptureState.activeZone = null;
+        }
+
+        playerCaptureState.progress = 0f;
+        enemyCaptureState.progress = 0f;
+        return true;
     }
 
     // Contested visuals are temporary and only active while both actors share the same zone.

@@ -1,14 +1,21 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.AI;
-using UnityEngine.EventSystems;
-using UnityEngine.InputSystem;
+
+public enum PickupKind
+{
+    InstantCapture,
+    GrenadeReady,
+    TimeSlow,
+    SwapZones,
+}
 
 public class PickupEffects : MonoBehaviour
 {
     public static PickupEffects Instance { get; private set; }
 
     private float instantCaptureExpireAt;
+    private float zoneSwapHudExpireAt;
     private Coroutine enemySlowCoroutine;
 
     // Cached enemy state so we can restore it cleanly.
@@ -19,21 +26,44 @@ public class PickupEffects : MonoBehaviour
     private float originalAgentAcceleration;
     private float originalAnimatorSpeed;
 
-    // One-slot grenade inventory: set by BombPickup, thrown on next tap.
-    private GameObject storedGrenadePrefab;
-    private float storedThrowForce;
-    private float storedUpwardAngleDegrees;
+    private bool hasPending;
+    private PickupKind pendingKind;
+    private float pendingInstantCaptureSeconds;
+    private float pendingTimeSlowSeconds;
+    private float pendingTimeSlowScale;
+    private GameObject pendingGrenadePrefab;
+    private float pendingGrenadeThrowForce;
+    private float pendingGrenadeUpwardAngleDegrees;
+    private ZoneManager pendingZoneManager;
+    private float pendingZoneSwapHudSeconds;
+
+    public bool HasPendingPowerup
+    {
+        get { return hasPending; }
+    }
+
+    public PickupKind PendingKind
+    {
+        get { return pendingKind; }
+    }
 
     public bool IsInstantPlayerCaptureActive
     {
         get { return Time.time < instantCaptureExpireAt; }
     }
 
-    public bool HasStoredGrenade
+    public bool IsTimeSlowActive
     {
-        get { return storedGrenadePrefab != null; }
+        get { return enemySlowCoroutine != null; }
     }
 
+    public bool IsZoneSwapHudActive
+    {
+        get { return Time.time < zoneSwapHudExpireAt; }
+    }
+
+
+    // Ensure there is only one instance of the PickupEffects class in the scene.
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -61,77 +91,89 @@ public class PickupEffects : MonoBehaviour
         }
     }
 
-    private void Update()
+    public void SetPendingInstantCapture(float seconds)
     {
-        if (!HasStoredGrenade) return;
-        if (!WasTapThisFrame()) return;
-        ThrowStoredGrenade();
+        BeginPending(PickupKind.InstantCapture);
+        pendingInstantCaptureSeconds = seconds;
     }
 
-    public void StoreGrenade(GameObject prefab, float throwForce, float upwardAngleDegrees)
+    public void SetPendingTimeSlow(float seconds, float scale)
     {
-        if (prefab == null) return;
-
-        // One-slot inventory: a newer pickup simply overwrites the stored grenade.
-        storedGrenadePrefab = prefab;
-        storedThrowForce = throwForce;
-        storedUpwardAngleDegrees = upwardAngleDegrees;
+        BeginPending(PickupKind.TimeSlow);
+        pendingTimeSlowSeconds = seconds;
+        pendingTimeSlowScale = scale;
     }
 
-    private void ThrowStoredGrenade()
+    public void SetPendingGrenade(GameObject prefab, float throwForce, float upwardAngleDegrees)
     {
-        Camera cam = Camera.main;
-        if (cam == null)
+        BeginPending(PickupKind.GrenadeReady);
+        pendingGrenadePrefab = prefab;
+        pendingGrenadeThrowForce = throwForce;
+        pendingGrenadeUpwardAngleDegrees = upwardAngleDegrees;
+    }
+
+    public void SetPendingZoneSwap(ZoneManager zoneManager, float hudDisplaySeconds)
+    {
+        BeginPending(PickupKind.SwapZones);
+        pendingZoneManager = zoneManager;
+        pendingZoneSwapHudSeconds = hudDisplaySeconds;
+    }
+
+    public bool TryConsumePending()
+    {
+        if (!hasPending)
         {
-            return;
+            return false;
         }
 
-        Transform camTransform = cam.transform;
+        switch (pendingKind)
+        {
+            case PickupKind.InstantCapture:
+                ActivateInstantPlayerCapture(pendingInstantCaptureSeconds);
+                break;
+            case PickupKind.GrenadeReady:
+                ThrowGrenade(pendingGrenadePrefab, pendingGrenadeThrowForce, pendingGrenadeUpwardAngleDegrees);
+                break;
+            case PickupKind.TimeSlow:
+                ActivateTimeSlow(pendingTimeSlowSeconds, pendingTimeSlowScale);
+                break;
+            case PickupKind.SwapZones:
+                pendingZoneManager.SwapPlayerAndEnemyZones();
+                ShowZoneSwapHud(pendingZoneSwapHudSeconds);
+                break;
+        }
+
+        ClearPending();
+        return true;
+    }
+
+    private void BeginPending(PickupKind kind)
+    {
+        ClearPending();
+        hasPending = true;
+        pendingKind = kind;
+    }
+
+    private void ClearPending()
+    {
+        hasPending = false;
+        pendingGrenadePrefab = null;
+        pendingZoneManager = null;
+    }
+
+    private static void ThrowGrenade(GameObject prefab, float throwForce, float upwardAngleDegrees)
+    {
+        Transform camTransform = Camera.main.transform;
         Vector3 spawnPosition = camTransform.position + camTransform.forward * 0.2f;
-        Quaternion arc = Quaternion.AngleAxis(-storedUpwardAngleDegrees, camTransform.right);
+        Quaternion arc = Quaternion.AngleAxis(-upwardAngleDegrees, camTransform.right);
         Vector3 throwDirection = (arc * camTransform.forward).normalized;
 
-        GameObject grenade = Instantiate(storedGrenadePrefab, spawnPosition, camTransform.rotation);
-        Rigidbody rb = grenade.GetComponent<Rigidbody>();
-        if (rb != null)
-        {
-            rb.AddForce(throwDirection * storedThrowForce, ForceMode.Impulse);
-        }
-
-        storedGrenadePrefab = null;
-    }
-
-    private static bool WasTapThisFrame()
-    {
-        bool tapped = false;
-        if (Touchscreen.current != null)
-        {
-            tapped |= Touchscreen.current.primaryTouch.press.wasPressedThisFrame;
-        }
-
-        if (Mouse.current != null)
-        {
-            tapped |= Mouse.current.leftButton.wasPressedThisFrame;
-        }
-
-        if (!tapped)
-        {
-            return false;
-        }
-
-        // Don't burn a grenade on UI taps (e.g. settings button, popup closes).
-        if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
-        {
-            return false;
-        }
-
-        return true;
+        GameObject grenade = Object.Instantiate(prefab, spawnPosition, camTransform.rotation);
+        grenade.GetComponent<Rigidbody>().AddForce(throwDirection * throwForce, ForceMode.Impulse);
     }
 
     public void ActivateInstantPlayerCapture(float seconds)
     {
-        if (seconds <= 0f) return;
-
         float candidate = Time.time + seconds;
         if (candidate > instantCaptureExpireAt)
         {
@@ -139,18 +181,24 @@ public class PickupEffects : MonoBehaviour
         }
     }
 
-    // A new pickup restarts the buff with the latest duration and scale.
+    public void ShowZoneSwapHud(float seconds)
+    {
+        float candidate = Time.time + seconds;
+        if (candidate > zoneSwapHudExpireAt)
+        {
+            zoneSwapHudExpireAt = candidate;
+        }
+    }
+
     public void ActivateTimeSlow(float seconds, float scale)
     {
-        if (seconds <= 0f) return;
-
         StopEnemySlow();
 
         Enemy enemy = FindEnemy();
         if (enemy == null) return;
 
         slowedAgent = enemy.Agent;
-        slowedAnimator = enemy.Animator;
+        slowedAnimator = enemy.GetComponentInParent<Animator>();
         float clampedScale = Mathf.Clamp(scale, 0.05f, 1f);
 
         if (slowedAgent != null)
@@ -186,7 +234,6 @@ public class PickupEffects : MonoBehaviour
             enemySlowCoroutine = null;
         }
 
-        // Enemy may have been destroyed mid-buff; skip safely via null checks.
         if (slowedAgent != null)
         {
             slowedAgent.speed = originalAgentSpeed;
@@ -206,10 +253,8 @@ public class PickupEffects : MonoBehaviour
     private static Enemy FindEnemy()
     {
         GameObject enemyObject = GameObject.FindWithTag("Enemy");
-        if (enemyObject == null) return null;
-
-        Enemy enemy = enemyObject.GetComponentInParent<Enemy>();
-        return enemy != null ? enemy : enemyObject.GetComponentInChildren<Enemy>(true);
+        Enemy enemy = enemyObject?.GetComponentInParent<Enemy>();
+        return enemy != null ? enemy : enemyObject?.GetComponentInChildren<Enemy>(true);
     }
 
     private void OnGameResetRequested()
@@ -220,7 +265,8 @@ public class PickupEffects : MonoBehaviour
     private void ClearAllBuffs()
     {
         instantCaptureExpireAt = 0f;
-        storedGrenadePrefab = null;
+        zoneSwapHudExpireAt = 0f;
+        ClearPending();
         StopEnemySlow();
     }
 }

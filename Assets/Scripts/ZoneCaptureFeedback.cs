@@ -25,53 +25,44 @@ public class ZoneCaptureFeedback : MonoBehaviour
 
     private void OnPlayerCapturedZone(Zone capturedZone)
     {
-        Transform playerTransform = zoneManager != null ? zoneManager.MainCameraTransform : null;
-        if (playerTransform == null && Camera.main != null)
-        {
-            playerTransform = Camera.main.transform;
-        }
-
         SpawnFeedback(
             capturedZone,
             playerCaptureParticlePrefab,
-            playerTransform,
-            SoundLibrary.Instance != null ? SoundLibrary.Instance.PlayerZoneCaptureSfx : null);
+            zoneManager.MainCameraTransform,
+            SoundLibrary.Instance.PlayerZoneCaptureSfx);
     }
 
     private void OnEnemyCapturedZone(Zone capturedZone)
     {
-        GameObject enemyObject = GameObject.FindWithTag("Enemy");
-        Transform enemyTransform = enemyObject != null ? enemyObject.transform : null;
-
         SpawnFeedback(
             capturedZone,
             enemyCaptureParticlePrefab,
-            enemyTransform,
-            SoundLibrary.Instance != null ? SoundLibrary.Instance.EnemyZoneCaptureSfx : null);
+            GameObject.FindWithTag("Enemy")?.transform,
+            SoundLibrary.Instance.EnemyZoneCaptureSfx);
     }
 
     private void SpawnFeedback(Zone capturedZone, GameObject particlePrefab, Transform actorTransform, AudioClip sfx)
     {
-        if (capturedZone != null && particlePrefab != null)
+        if (particlePrefab != null)
         {
             GameObject zoneParticle = Instantiate(
                 particlePrefab,
                 capturedZone.transform.position,
                 Quaternion.identity);
             Destroy(zoneParticle, particleLifetime);
+
+            if (actorTransform != null)
+            {
+                GameObject actorParticle = Instantiate(
+                    particlePrefab,
+                    actorTransform.position,
+                    Quaternion.identity,
+                    actorTransform);
+                Destroy(actorParticle, particleLifetime);
+            }
         }
 
-        if (actorTransform != null && particlePrefab != null)
-        {
-            GameObject actorParticle = Instantiate(
-                particlePrefab,
-                actorTransform.position,
-                Quaternion.identity,
-                actorTransform);
-            Destroy(actorParticle, particleLifetime);
-        }
-
-        if (sfx != null && SoundManager.Instance != null)
+        if (sfx != null)
         {
             SoundManager.Instance.PlaySfx(sfx);
         }
