@@ -3,8 +3,9 @@ using UnityEngine.AI;
 
 public class Enemy : MonoBehaviour
 {
+    private const string PlayerTag = "Player";
+
     [SerializeField] private NavMeshAgent agent;
-    [SerializeField] private Transform playerCameraTransform;
     [SerializeField] private ZoneManager zoneManager;
 
     [SerializeField] private float attackRange = 1f;
@@ -12,6 +13,7 @@ public class Enemy : MonoBehaviour
     [SerializeField] private float chaseRange = 5f;
 
     private Zone currentTargetZone;
+    private Transform playerPoint;
 
     public float ChaseRange => chaseRange;
     public float AttackRange => attackRange;
@@ -27,9 +29,27 @@ public class Enemy : MonoBehaviour
 
     public Zone CurrentTargetZone => currentTargetZone;
 
+    private void Start()
+    {
+         GameObject playerObj = GameObject.FindGameObjectWithTag(PlayerTag);
+    
+
+        Camera cam = playerObj.GetComponentInChildren<Camera>(true);
+        playerPoint = cam != null ? cam.transform : playerObj.transform;
+    }
+
+
     public Zone GetZoneUnderFoot() => zoneManager.GetZoneAtWorldPosition(transform.position);
 
-    public Zone GetPlayerZone() => zoneManager.GetZoneAtWorldPosition(playerCameraTransform.position);
+    public Zone GetPlayerZone()
+    {
+        if (playerPoint == null)
+        {
+            return null;
+        }
+
+        return zoneManager.GetZoneAtWorldPosition(playerPoint.position);
+    }
 
     public bool IsZoneContestedWithPlayer()
     {
@@ -60,12 +80,22 @@ public class Enemy : MonoBehaviour
 
     public bool ShouldChasePlayer()
     {
-        return Vector3.Distance(transform.position, playerCameraTransform.position) <= chaseRange;
+        if (playerPoint == null)
+        {
+            return false;
+        }
+
+        return Vector3.Distance(transform.position, playerPoint.position) <= chaseRange;
     }
 
     public bool IsPlayerInAttackRange()
     {
-        return Vector3.Distance(transform.position, playerCameraTransform.position) <= attackRange;
+        if (playerPoint == null)
+        {
+            return false;
+        }
+
+        return Vector3.Distance(transform.position, playerPoint.position) <= attackRange;
     }
 
     public void StopMovement()
@@ -91,7 +121,12 @@ public class Enemy : MonoBehaviour
 
     public void SetChaseDestinationToPlayer()
     {
-        agent.SetDestination(playerCameraTransform.position);
+        if (playerPoint == null)
+        {
+            return;
+        }
+
+        agent.SetDestination(playerPoint.position);
     }
 
     public bool HasReachedZone()

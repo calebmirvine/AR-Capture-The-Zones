@@ -65,12 +65,21 @@ public class ActivePickupHudView : MonoBehaviour
 
     public void ConsumePendingPickup()
     {
-        PickupEffects.Instance.TryConsumePending();
+        PickupEffects fx = PickupEffects.Instance;
+        if (fx != null)
+        {
+            fx.TryConsumePending();
+        }
     }
 
     private void LateUpdate()
     {
         PickupEffects fx = PickupEffects.Instance;
+        if (fx == null)
+        {
+            return;
+        }
+
         PickupKind? current = null;
         GameObject prefab = null;
 
@@ -180,11 +189,11 @@ public class ActivePickupHudView : MonoBehaviour
         switch (kind)
         {
             case PickupKind.InstantCapture:
-                return fx.IsInstantPlayerCaptureActive;
+                return fx.IsInstantCapturePickupHudActive;
             case PickupKind.GrenadeReady:
                 return false;
             case PickupKind.TimeSlow:
-                return fx.IsTimeSlowActive;
+                return fx.IsTimeSlowPickupHudActive;
             case PickupKind.SwapZones:
                 return fx.IsZoneSwapHudActive;
             default:

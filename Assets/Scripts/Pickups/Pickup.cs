@@ -27,12 +27,19 @@ public abstract class Pickup : MonoBehaviour
             return;
         }
 
-        if (HealthSystem.Instance.IsGhost)
+        if (zoneManager == null)
         {
             return;
         }
 
-        if (PickupEffects.Instance.HasPendingPowerup)
+        HealthSystem health = HealthSystem.Instance;
+        if (health != null && health.IsGhost)
+        {
+            return;
+        }
+
+        PickupEffects effects = PickupEffects.Instance;
+        if (effects != null && effects.HasPendingPowerup)
         {
             return;
         }
@@ -59,7 +66,11 @@ public abstract class Pickup : MonoBehaviour
             SoundManager.Instance.PlaySfx(pickupSound);
         }
 
-        RegisterPending();
+        if (PickupEffects.Instance != null)
+        {
+            RegisterPending();
+        }
+
         Destroy(gameObject);
     }
 

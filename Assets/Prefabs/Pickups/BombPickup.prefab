@@ -133,5 +133,5 @@ MonoBehaviour:
   pickupRadius: 0.35
   pickupSound: {fileID: 0}
   grenadePrefab: {fileID: 4773867479802418029, guid: 79f986889454f4fc6a44324e42065d30, type: 3}
-  throwForce: 10
+  throwForce: 5
   upwardAngleDegrees: 20

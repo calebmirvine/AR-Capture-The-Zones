@@ -17,6 +17,8 @@ public class SpawnItems : MonoBehaviour
 
     [SerializeField] private int maxActivePickups = 2;
 
+    [SerializeField] private float spawnHeightOffset = 0.5f;
+
     private Coroutine spawnLoopCoroutine;
     private bool hasStartedSpawning;
     private readonly List<GameObject> activePickups = new List<GameObject>();
@@ -81,6 +83,7 @@ public class SpawnItems : MonoBehaviour
             }
 
             Vector3 spawnPosition = randomZone.GetRandomWorldPointInside();
+            spawnPosition.y += spawnHeightOffset;
             GameObject spawnedPickup = Instantiate(pickupPrefab, spawnPosition, Quaternion.identity);
             Pickup spawnedPickupComponent = spawnedPickup.GetComponent<Pickup>();
             if (spawnedPickupComponent != null)

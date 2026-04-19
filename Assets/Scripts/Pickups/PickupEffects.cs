@@ -14,8 +14,12 @@ public class PickupEffects : MonoBehaviour
 {
     public static PickupEffects Instance { get; private set; }
 
+    /// <summary>Extra time the active-pickup HUD stays visible after the gameplay effect ends.</summary>
+    public const float ActivePickupHudLingerSeconds = 0.5f;
+
     private float instantCaptureExpireAt;
     private float zoneSwapHudExpireAt;
+    private float timeSlowHudExpireAt;
     private Coroutine enemySlowCoroutine;
 
     // Cached enemy state so we can restore it cleanly.
@@ -62,6 +66,15 @@ public class PickupEffects : MonoBehaviour
         get { return Time.time < zoneSwapHudExpireAt; }
     }
 
+    public bool IsInstantCapturePickupHudActive
+    {
+        get { return Time.time < instantCaptureExpireAt + ActivePickupHudLingerSeconds; }
+    }
+
+    public bool IsTimeSlowPickupHudActive
+    {
+        get { return Time.time < timeSlowHudExpireAt; }
+    }
 
     // Ensure there is only one instance of the PickupEffects class in the scene.
     private void Awake()
@@ -183,19 +196,26 @@ public class PickupEffects : MonoBehaviour
 
     public void ShowZoneSwapHud(float seconds)
     {
-        float candidate = Time.time + seconds;
+        float candidate = Time.time + seconds + ActivePickupHudLingerSeconds;
         if (candidate > zoneSwapHudExpireAt)
         {
             zoneSwapHudExpireAt = candidate;
         }
     }
 
+    //Slow down the enemy movement and animation speed but keep the player's movement and camera speed unaffected.
     public void ActivateTimeSlow(float seconds, float scale)
     {
         StopEnemySlow();
 
         Enemy enemy = FindEnemy();
-        if (enemy == null) return;
+        if (enemy == null)
+        {
+            timeSlowHudExpireAt = 0f;
+            return;
+        }
+
+        timeSlowHudExpireAt = Time.time + seconds + ActivePickupHudLingerSeconds;
 
         slowedAgent = enemy.Agent;
         slowedAnimator = enemy.GetComponentInParent<Animator>();
@@ -266,6 +286,7 @@ public class PickupEffects : MonoBehaviour
     {
         instantCaptureExpireAt = 0f;
         zoneSwapHudExpireAt = 0f;
+        timeSlowHudExpireAt = 0f;
         ClearPending();
         StopEnemySlow();
     }
