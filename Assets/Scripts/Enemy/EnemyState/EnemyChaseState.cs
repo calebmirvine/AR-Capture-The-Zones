@@ -3,13 +3,11 @@ using UnityEngine;
 public class EnemyChaseState : EnemyStateMachineBehaviour
 {
     private bool captureRequested;
-    private bool idleRequested;
 
     public override void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
         base.OnStateEnter(animator, stateInfo, layerIndex);
         captureRequested = false;
-        idleRequested = false;
         animator.SetBool(CapturingParam, false);
 
         agent.updateRotation = true;
@@ -22,14 +20,14 @@ public class EnemyChaseState : EnemyStateMachineBehaviour
     {
         agent.updateRotation = true;
 
-        if (HandleContestedZone(animator, ref idleRequested, fireIdleTrigger: true))
+        enemy.ResumeMovement();
+
+        if (TryTriggerAttackIfInRange(animator))
         {
             return;
         }
 
-        enemy.ResumeMovement();
-
-        if (TryTriggerAttackIfInRange(animator))
+        if (HandleContestedZone(animator))
         {
             return;
         }

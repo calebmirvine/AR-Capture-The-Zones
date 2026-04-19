@@ -10,10 +10,7 @@ public class ZoneManager : MonoBehaviour
 
     [SerializeField] private Transform mainCameraTransform;
 
-    public Transform MainCameraTransform
-    {
-        get { return mainCameraTransform; }
-    }
+    public Transform MainCameraTransform => mainCameraTransform;
 
     private const int MinGridSize = 2;
     private const int MaxGridSize = 4;
@@ -37,37 +34,20 @@ public class ZoneManager : MonoBehaviour
     [SerializeField] private float enemySecondsToCapture = 3f;
     [SerializeField] private readonly float secondsToDrain = 2f;
 
-    public readonly List<Zone> zones = new List<Zone>();
+    public List<Zone> zones = new List<Zone>();
 
-    public int Rows
-    {
-        get { return rows; }
-    }
-
-    public int Columns
-    {
-        get { return columns; }
-    }
-
-    public void SetRows(int value)
-    {
+    public void SetRows(int value) =>
         rows = Mathf.Clamp(value, MinGridSize, MaxGridSize);
-    }
 
-    public void SetColumns(int value)
-    {
+    public void SetColumns(int value) =>
         columns = Mathf.Clamp(value, MinGridSize, MaxGridSize);
-    }
 
-    public void SetPlayerSecondsToCapture(float value)
-    {
+    public void SetPlayerSecondsToCapture(float value) =>
         playerSecondsToCapture = Mathf.Max(MinCaptureSeconds, value);
-    }
 
-    public void SetEnemySecondsToCapture(float value)
-    {
+    public void SetEnemySecondsToCapture(float value) =>
         enemySecondsToCapture = Mathf.Max(MinCaptureSeconds, value);
-    }
+    
 
     private void OnValidate()
     {
@@ -80,27 +60,13 @@ public class ZoneManager : MonoBehaviour
     private void OnEnable()
     {
         Messenger<Transform, Vector2>.AddListener(GameEvent.FLOOR_CONFIRMED, OnFloorConfirmed);
-        Messenger.AddListener(GameEvent.GAMEPLAY_STARTED, OnGameplayStartedNoOp);
         Messenger.AddListener(GameEvent.GAME_RESET_REQUESTED, OnGameResetRequested);
-        Messenger<Zone>.AddListener(GameEvent.ZONE_BECAME_NEUTRAL, OnZoneEventNoOp);
-        Messenger<Zone>.AddListener(GameEvent.ZONE_BECAME_CONTESTED, OnZoneEventNoOp);
-        Messenger<Zone>.AddListener(GameEvent.ZONE_BECAME_PLAYER, OnZoneEventNoOp);
-        Messenger<Zone>.AddListener(GameEvent.ZONE_BECAME_ENEMY, OnZoneEventNoOp);
-        Messenger<Zone>.AddListener(GameEvent.PLAYER_CAPTURED_ZONE, OnZoneEventNoOp);
-        Messenger<Zone>.AddListener(GameEvent.ENEMY_CAPTURED_ZONE, OnZoneEventNoOp);
     }
 
     private void OnDisable()
     {
         Messenger<Transform, Vector2>.RemoveListener(GameEvent.FLOOR_CONFIRMED, OnFloorConfirmed);
-        Messenger.RemoveListener(GameEvent.GAMEPLAY_STARTED, OnGameplayStartedNoOp);
         Messenger.RemoveListener(GameEvent.GAME_RESET_REQUESTED, OnGameResetRequested);
-        Messenger<Zone>.RemoveListener(GameEvent.ZONE_BECAME_NEUTRAL, OnZoneEventNoOp);
-        Messenger<Zone>.RemoveListener(GameEvent.ZONE_BECAME_CONTESTED, OnZoneEventNoOp);
-        Messenger<Zone>.RemoveListener(GameEvent.ZONE_BECAME_PLAYER, OnZoneEventNoOp);
-        Messenger<Zone>.RemoveListener(GameEvent.ZONE_BECAME_ENEMY, OnZoneEventNoOp);
-        Messenger<Zone>.RemoveListener(GameEvent.PLAYER_CAPTURED_ZONE, OnZoneEventNoOp);
-        Messenger<Zone>.RemoveListener(GameEvent.ENEMY_CAPTURED_ZONE, OnZoneEventNoOp);
     }
 
     private void OnFloorConfirmed(Transform planeTransform, Vector2 planeSize)
@@ -108,15 +74,6 @@ public class ZoneManager : MonoBehaviour
         GenerateZones(planeTransform, planeSize);
         BuildRuntimeNavMesh();
         Messenger.Broadcast(GameEvent.GAMEPLAY_STARTED, MessengerMode.DONT_REQUIRE_LISTENER);
-    }
-
-    private void OnGameplayStartedNoOp()
-    {
-    }
-
-    private void OnZoneEventNoOp(Zone zone)
-    {
-        _ = zone;
     }
 
     private void OnGameResetRequested()
@@ -185,7 +142,7 @@ public class ZoneManager : MonoBehaviour
     }
 
     // Builds zones from the confirmed floor plane.
-    public void GenerateZones(Transform planeTransform, Vector2 planeSize)
+    private void GenerateZones(Transform planeTransform, Vector2 planeSize)
     {
         //Clear all zones and reset capture states and contested zone.
         ClearAllZones();
@@ -198,20 +155,8 @@ public class ZoneManager : MonoBehaviour
                 zones.Add(zone);
             }
         }
-
-        // Reset capture states and contested zone.
-
-        playerCaptureState.activeZone = null;
-        playerCaptureState.progress = 0f;
-
-        enemyCaptureState.activeZone = null;
-        enemyCaptureState.progress = 0f;
-
-        activeContestedZone = null;
-        activeContestedPreviousOwner = ZoneOwner.Neutral;
     }
 
-    // Material lookup for floor by zone owner.
     // Material lookup for floor by zone owner.
     public Material GetFloorMaterial(ZoneOwner owner)
     {
@@ -225,7 +170,6 @@ public class ZoneManager : MonoBehaviour
     }
 
     // Flag prefab lookup by zone owner.
-    // Flag prefab lookup by zone owner.
     public GameObject GetFlagPrefab(ZoneOwner owner)
     {
         switch (owner)
@@ -238,7 +182,7 @@ public class ZoneManager : MonoBehaviour
     }
 
     // Builds navmesh from generated runtime geometry.
-    public void BuildRuntimeNavMesh()
+    private void BuildRuntimeNavMesh()
     {
         if (runtimeNavMeshSurface == null)
         {
@@ -291,26 +235,6 @@ public class ZoneManager : MonoBehaviour
         }
 
         return null;
-    }
-
-    // True when enemy-held zones are strictly more than half of the grid (neutrals count in total).
-    public bool EnemyControlsMajorityOfGrid()
-    {
-        if (zones == null || zones.Count == 0)
-        {
-            return false;
-        }
-
-        int enemyCount = 0;
-        foreach (Zone zone in zones)
-        {
-            if (zone != null && zone.Owner == ZoneOwner.Enemy)
-            {
-                enemyCount++;
-            }
-        }
-
-        return enemyCount * 2 > zones.Count;
     }
 
     private static bool IsPlayerDead()

@@ -10,15 +10,8 @@ public class PickupHudEntry
     [SerializeField] private PickupKind kind;
     [SerializeField] private GameObject displayPrefab;
 
-    public PickupKind Kind
-    {
-        get { return kind; }
-    }
-
-    public GameObject DisplayPrefab
-    {
-        get { return displayPrefab; }
-    }
+    public PickupKind Kind => kind;
+    public GameObject DisplayPrefab => displayPrefab;
 }
 
 public class ActivePickupHudView : MonoBehaviour

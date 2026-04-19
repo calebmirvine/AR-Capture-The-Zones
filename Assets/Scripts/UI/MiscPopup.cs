@@ -8,10 +8,9 @@ public class MiscPopup : BasePopup
     [SerializeField] private SettingsPopup settingsPopup;
     [SerializeField] private Toggle vibrationToggle;
 
-    private void OnEnable()
-    {
+    private void OnEnable() =>
         SyncVibrationToggle();
-    }
+
 
     public void OnBackButton()
     {

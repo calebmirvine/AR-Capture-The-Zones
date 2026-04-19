@@ -4,15 +4,15 @@ using UnityEngine;
 public class EnemyPatrolState : EnemyStateMachineBehaviour
 {
     private bool captureRequested;
-    private bool idleRequested;
     private bool chaseRequested;
+    private bool idleEmittedForNoTargets;
 
     public override void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
         base.OnStateEnter(animator, stateInfo, layerIndex);
         captureRequested = false;
-        idleRequested = false;
         chaseRequested = false;
+        idleEmittedForNoTargets = false;
         animator.SetBool(CapturingParam, false);
 
         agent.updateRotation = true;
@@ -35,14 +35,14 @@ public class EnemyPatrolState : EnemyStateMachineBehaviour
 
         agent.updateRotation = true;
 
-        if (HandleContestedZone(animator, ref idleRequested, fireIdleTrigger: true))
+        enemy.ResumeMovement();
+
+        if (TryTriggerAttackIfInRange(animator))
         {
             return;
         }
 
-        enemy.ResumeMovement();
-
-        if (TryTriggerAttackIfInRange(animator))
+        if (HandleContestedZone(animator))
         {
             return;
         }
@@ -65,8 +65,13 @@ public class EnemyPatrolState : EnemyStateMachineBehaviour
         animator.SetFloat(SpeedParam, agent.velocity.magnitude);
         animator.SetBool(CapturingParam, false);
 
-        if (enemy.CurrentTargetZone == null && enemy.HasReachedZone())
+        if (enemy.HasEnemyCaptureTargets())
         {
+            idleEmittedForNoTargets = false;
+        }
+        else if (!idleEmittedForNoTargets)
+        {
+            idleEmittedForNoTargets = true;
             animator.SetTrigger(IdleParam);
         }
     }

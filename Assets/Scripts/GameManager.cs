@@ -6,20 +6,16 @@ public class GameManager : MonoBehaviour
 {
     private const float EnemySpawnSampleRadius = 0.75f;
     private const string PP_VIBRATION_ENABLED = "VibrationEnabled";
-
     // Try to spawn the enemy in 6 random zones so we have a better chance of finding a valid zone.
     private const int EnemySpawnZoneAttempts = 6;
-
     [SerializeField] private ZoneManager zoneManager;
-
     [SerializeField] private GameObject enemyPrefab;
     private GameObject activeEnemy;
     private bool vibrationEnabled = true;
 
-    private void Awake()
-    {
+    private void Awake() =>
         vibrationEnabled = PlayerPrefs.GetInt(PP_VIBRATION_ENABLED, 1) == 1;
-    }
+        
 
     private void OnEnable()
     {
@@ -75,15 +71,10 @@ public class GameManager : MonoBehaviour
     }
 
     private void OnPlayerCapturedZone(Zone capturedZone)
-    {
-        // Messenger.Broadcast(GameEvent.PLAYER_CAPTURED_ZONE, capturedZone);
-        Handheld.Vibrate();
-    }
+    => Handheld.Vibrate();
 
     private void OnGameResetRequested()
-    {
-        DestroyActiveEnemy();
-    }
+    => DestroyActiveEnemy();
 
     private void DestroyActiveEnemy()
     {

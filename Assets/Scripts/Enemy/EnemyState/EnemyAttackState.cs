@@ -6,7 +6,6 @@ public class EnemyAttackState : EnemyStateMachineBehaviour
     {
         base.OnStateEnter(animator, stateInfo, layerIndex);
         animator.SetBool(IsAttackingParam, true);
-        animator.ResetTrigger(AttackingParam);
         animator.SetBool(CapturingParam, false);
         animator.SetFloat(SpeedParam, 0f);
         enemy.StopMovement();
@@ -16,6 +15,5 @@ public class EnemyAttackState : EnemyStateMachineBehaviour
     {
         animator.SetBool(IsAttackingParam, false);
         enemy.ResumeMovement();
-        animator.ResetTrigger(AttackingParam);
     }
 }

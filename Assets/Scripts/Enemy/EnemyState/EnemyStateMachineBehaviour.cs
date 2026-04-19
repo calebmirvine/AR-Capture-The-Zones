@@ -12,7 +12,6 @@ public class EnemyStateMachineBehaviour : StateMachineBehaviour
     protected const string CapturingParam = "IsCapturing";
     protected const string DanceIdxParam = "DanceIndex";
     protected const string SpeedParam = "Speed";
-    protected const string AttackingParam = "Attacking";
     protected const string IsAttackingParam = "IsAttacking";
 
     public override void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
@@ -31,8 +30,8 @@ public class EnemyStateMachineBehaviour : StateMachineBehaviour
     }
 
 
-    //Shared contested-tile handling: stop, clear capture bool. Optionally fires <c>Idle</c> once (patrol/chase → idle).
-    protected bool HandleContestedZone(Animator animator, ref bool idleTransitionLatch, bool fireIdleTrigger)
+    // Contested tile with player: stop and clear capture/attack; stay on current animator state (no Idle).
+    protected bool HandleContestedZone(Animator animator)
     {
         if (!enemy.IsZoneContestedWithPlayer())
         {
@@ -43,21 +42,7 @@ public class EnemyStateMachineBehaviour : StateMachineBehaviour
         animator.SetFloat(SpeedParam, 0f);
         animator.SetBool(CapturingParam, false);
         animator.SetBool(IsAttackingParam, false);
-        if (fireIdleTrigger && !idleTransitionLatch)
-        {
-            idleTransitionLatch = true;
-            animator.SetTrigger(IdleParam);
-        }
-
         return true;
-    }
-
-//
-    //Contested handling while already in idle state (no Idle trigger).
-    protected bool HandleContestedZoneWhileIdle(Animator animator)
-    {
-        bool unused = false;
-        return HandleContestedZone(animator, ref unused, fireIdleTrigger: false);
     }
 
     //Enter or continue capture dance; stops agent on first entry.
@@ -87,7 +72,7 @@ public class EnemyStateMachineBehaviour : StateMachineBehaviour
         }
 
         animator.SetBool(CapturingParam, false);
-        animator.SetTrigger(AttackingParam);
+        animator.SetBool(IsAttackingParam, true);
         return true;
     }
 

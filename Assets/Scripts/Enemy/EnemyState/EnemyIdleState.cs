@@ -30,9 +30,12 @@ public class EnemyIdleState : EnemyStateMachineBehaviour
     {
         ResetChaseIfFar(enemy, ref chaseRequested);
 
-        if (HandleContestedZoneWhileIdle(animator))
+        if (enemy.IsZoneContestedWithPlayer())
         {
-            return;
+            enemy.StopMovement();
+            animator.SetFloat(SpeedParam, 0f);
+            animator.SetBool(CapturingParam, false);
+            animator.SetBool(IsAttackingParam, false);
         }
 
         if (TryTriggerAttackIfInRange(animator))

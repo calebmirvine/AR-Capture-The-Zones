@@ -29,6 +29,17 @@ public class Enemy : MonoBehaviour
 
     public Zone CurrentTargetZone => currentTargetZone;
 
+    /// <summary>True if there is at least one neutral or player-owned zone the enemy can head toward.</summary>
+    public bool HasEnemyCaptureTargets()
+    {
+        if (zoneManager == null)
+        {
+            return false;
+        }
+
+        return zoneManager.GetNearestEnemyTargetZone(transform.position) != null;
+    }
+
     private void Start()
     {
         GameObject playerObj = GameObject.FindGameObjectWithTag(PlayerTag);

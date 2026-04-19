@@ -16,41 +16,15 @@ public class HealthSystem : MonoBehaviour
     private Coroutine ghostCoroutine;
     private float invulnerableUntilTime;
 
-    public int CurrentHealth
-    {
-        get
-        {
-            return currentHealth;
-        }
-    }
+    public int CurrentHealth => currentHealth;
 
-    public int MaxHealth
-    {
-        get
-        {
-            return maxHealth;
-        }
-    }
+    public int MaxHealth => maxHealth;
 
     public float HealthNormalized => (float)currentHealth / maxHealth;
-
     public event Action<float> OnHealthChanged;
 
-    public bool IsGhost
-    {
-        get
-        {
-            return isGhost;
-        }
-    }
-
-    public float GhostTimeRemaining
-    {
-        get
-        {
-            return ghostTimeRemaining;
-        }
-    }
+    public bool IsGhost => isGhost;
+    public float GhostTimeRemaining => ghostTimeRemaining;
 
     private void Awake()
     {

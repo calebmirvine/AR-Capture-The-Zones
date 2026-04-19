@@ -22,10 +22,7 @@ public class BasePopup : MonoBehaviour
         }
     }
 
-    public bool IsActive()
-    {
-        return gameObject.activeSelf;
-    }
+    public bool IsActive() => gameObject.activeSelf;
 
     protected void PlayNavigationSfx()
     {
