@@ -236,15 +236,14 @@ public class ZoneManager : MonoBehaviour
         return null;
     }
 
-    /// <summary>
-    /// True when <paramref name="position"/> lies in a cell whose owner is <see cref="ZoneOwner.Contested"/> (active fight tile per <c>UpdateContestedVisualState</c>).
-    /// </summary>
+    // Returns true if the zone at the given world position is contested.
     public bool IsContestedZoneAtWorldPosition(Vector3 position)
     {
         Zone zone = GetZoneAtWorldPosition(position);
         return zone != null && zone.Owner == ZoneOwner.Contested;
     }
 
+//
     private static bool IsPlayerDead()
     {
         return HealthSystem.Instance != null && HealthSystem.Instance.IsGhost;
@@ -338,6 +337,7 @@ public class ZoneManager : MonoBehaviour
         return true;
     }
 
+    // Update the contested visual state of the zone
     private void UpdateContestedVisualState(Zone sharedZone)
     {
         EndStaleContestedVisual(sharedZone);
@@ -627,6 +627,91 @@ public class ZoneManager : MonoBehaviour
         ResetBothCaptureStates();
     }
 
+    // Swaps up to `pairCount` Player zones with Enemy zones (random selection).
+    // Neutral and Contested zones are untouched.
+    public void SwapPlayerAndEnemyZones(int pairCount)
+    {
+        pairCount = Mathf.Max(0, pairCount);
+        if (pairCount == 0)
+        {
+            return;
+        }
+
+        List<Zone> playerZones = new List<Zone>();
+        List<Zone> enemyZones = new List<Zone>();
+        foreach (Zone zone in zones)
+        {
+            if (zone == null)
+            {
+                continue;
+            }
+
+            if (zone.Owner == ZoneOwner.Player)
+            {
+                playerZones.Add(zone);
+            }
+            else if (zone.Owner == ZoneOwner.Enemy)
+            {
+                enemyZones.Add(zone);
+            }
+        }
+
+        int maxPairs = Mathf.Min(pairCount, Mathf.Min(playerZones.Count, enemyZones.Count));
+        if (maxPairs <= 0)
+        {
+            return;
+        }
+
+        ShuffleInPlace(playerZones);
+        ShuffleInPlace(enemyZones);
+
+        for (int i = 0; i < maxPairs; i++)
+        {
+            SetZoneOwner(playerZones[i], ZoneOwner.Enemy);
+            SetZoneOwner(enemyZones[i], ZoneOwner.Player);
+        }
+
+        if (activeContestedPreviousOwner == ZoneOwner.Player)
+        {
+            activeContestedPreviousOwner = ZoneOwner.Enemy;
+        }
+        else if (activeContestedPreviousOwner == ZoneOwner.Enemy)
+        {
+            activeContestedPreviousOwner = ZoneOwner.Player;
+        }
+
+        ResetBothCaptureStates();
+    }
+
+    // Randomly assigns each zone to Player / Enemy / Neutral (Contested is never assigned directly).
+    public void RandomizeAllZonesOwners()
+    {
+        ZoneOwner[] candidates = { ZoneOwner.Neutral, ZoneOwner.Player, ZoneOwner.Enemy };
+        foreach (Zone zone in zones)
+        {
+            if (zone == null)
+            {
+                continue;
+            }
+
+            ZoneOwner newOwner = candidates[Random.Range(0, candidates.Length)];
+
+            SetZoneOwner(zone, newOwner);
+        }
+
+        ResetBothCaptureStates();
+        ResetContestedOverlapTracking();
+    }
+
+    private static void ShuffleInPlace<T>(List<T> list)
+    {
+        for (int i = list.Count - 1; i > 0; i--)
+        {
+            int j = Random.Range(0, i + 1);
+            (list[i], list[j]) = (list[j], list[i]);
+        }
+    }
+
     public Zone GetRandomZone()
     {
         return zones.Count == 0 ? null : zones[Random.Range(0, zones.Count)];
@@ -646,6 +731,8 @@ public class ZoneManager : MonoBehaviour
         return neutralZones.Count > 0 ? neutralZones[Random.Range(0, neutralZones.Count)] : GetRandomZone();
     }
 
+
+    // Create a zone at the given position in the plane
     private Zone CreateZone(Transform planeTransform, Vector2 planeSize, int rowIndex, int colIndex)
     {
         float cellWidth = planeSize.x / columns;

@@ -200,6 +200,8 @@ public class ActivePickupHudView : MonoBehaviour
                 return fx.IsTimeSlowPickupHudActive;
             case PickupKind.SwapZones:
                 return fx.IsZoneSwapHudActive;
+            case PickupKind.ShuffleZones:
+                return fx.IsZoneShuffleHudActive;
             default:
                 return false;
         }

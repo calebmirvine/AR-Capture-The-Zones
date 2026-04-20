@@ -1332,6 +1332,7 @@ MonoBehaviour:
   grenadeReadyPickupSfx: {fileID: 8300000, guid: 02013cfa61c1a40a38ad17e8b86ffd54, type: 3}
   timeSlowPickupSfx: {fileID: 8300000, guid: b4ff1cdd25b15406ba4407e5d5fdb0ab, type: 3}
   swapZonesPickupSfx: {fileID: 8300000, guid: d9baf052da54d4226bc40213dc792f46, type: 3}
+  shuffleZonesPickupSfx: {fileID: 8300000, guid: c60de7b60d1884e1d80e269a51f552b7, type: 3}
   grenadeExplosionSfx: {fileID: 8300000, guid: 0aa0574b6607c4e6ba1dfe984e248641, type: 3}
   setupMusicTracks:
   - {fileID: 8300000, guid: d9595ca8f1aa74c9399535cbe6395675, type: 3}
@@ -11284,6 +11285,7 @@ MonoBehaviour:
   - {fileID: 7823205500758707432, guid: d2275fc619142e94583cd06b9f01e784, type: 3}
   - {fileID: 8050537342152234946, guid: 50e260f821baa56419af96b848301e5d, type: 3}
   - {fileID: 5225455176718880169, guid: 59fd80584945fc7448940995b97dab30, type: 3}
+  - {fileID: 1125700643288643269, guid: 746aea362acde4a609758700bba3fd5c, type: 3}
   minSpawnDelay: 5
   maxSpawnDelay: 10
   maxActivePickups: 2
@@ -11331,7 +11333,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1957915810
 RectTransform:
   m_ObjectHideFlags: 0
@@ -11467,6 +11469,8 @@ MonoBehaviour:
     displayPrefab: {fileID: 3527829309648629801, guid: 4bbb777e4d45b4720a551d7d3f2bdae1, type: 3}
   - kind: 3
     displayPrefab: {fileID: 4360586451091770306, guid: 23585c5f800c34c558a20f2e3042c1c6, type: 3}
+  - kind: 4
+    displayPrefab: {fileID: 345900302833500166, guid: 4aa2c78ae83f04a9982d2bef03f80c25, type: 3}
   pickupButton: {fileID: 1957915813}
 --- !u!1 &1966139202
 GameObject:

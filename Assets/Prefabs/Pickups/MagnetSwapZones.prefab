@@ -127,5 +127,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ZoneSwapPickup
   pickupRadius: 0.35
-  pickupSound: {fileID: 0}
-  hudDisplaySeconds: 2
+  hudDisplaySeconds: 5
+  swapAllZones: 0
+  zonesToSwap: 2

@@ -8,7 +8,7 @@ public class StartButtonController : MonoBehaviour
     [SerializeField] private ARPlaneManager arPlaneManager;
     [SerializeField] private ARSession arSession;
     [SerializeField] private Button confirmButton;
-    [SerializeField] private float minimumPlaneArea = 1f;
+    [SerializeField] private float minimumPlaneArea = 20f;
 
     private void OnEnable()
     {

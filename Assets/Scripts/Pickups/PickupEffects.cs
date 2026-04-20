@@ -8,6 +8,7 @@ public enum PickupKind
     GrenadeReady,
     TimeSlow,
     SwapZones,
+    ShuffleZones,
 }
 
 // Reapply time-slow after gameplay/NavMesh so agent settings are not overwritten
@@ -21,6 +22,7 @@ public class PickupEffects : MonoBehaviour
 
     private float instantCaptureExpireAt;
     private float zoneSwapHudExpireAt;
+    private float zoneShuffleHudExpireAt;
     private float timeSlowHudExpireAt;
     private Coroutine enemySlowCoroutine;
 
@@ -42,6 +44,9 @@ public class PickupEffects : MonoBehaviour
     private float pendingGrenadeUpwardAngleDegrees;
     private ZoneManager pendingZoneManager;
     private float pendingZoneSwapHudSeconds;
+    private bool pendingZoneSwapAll;
+    private int pendingZoneSwapCount;
+    private float pendingZoneShuffleHudSeconds;
 
     public bool HasPendingPowerup
     {
@@ -87,6 +92,11 @@ public class PickupEffects : MonoBehaviour
     public bool IsZoneSwapHudActive
     {
         get { return Time.time < zoneSwapHudExpireAt; }
+    }
+
+    public bool IsZoneShuffleHudActive
+    {
+        get { return Time.time < zoneShuffleHudExpireAt; }
     }
 
     public bool IsInstantCapturePickupHudActive
@@ -168,11 +178,20 @@ public class PickupEffects : MonoBehaviour
         pendingGrenadeUpwardAngleDegrees = upwardAngleDegrees;
     }
 
-    public void SetPendingZoneSwap(ZoneManager zoneManager, float hudDisplaySeconds)
+    public void SetPendingZoneSwap(ZoneManager zoneManager, float hudDisplaySeconds, bool swapAllZones, int zonesToSwap)
     {
         BeginPending(PickupKind.SwapZones);
         pendingZoneManager = zoneManager;
         pendingZoneSwapHudSeconds = hudDisplaySeconds;
+        pendingZoneSwapAll = swapAllZones;
+        pendingZoneSwapCount = Mathf.Max(0, zonesToSwap);
+    }
+
+    public void SetPendingZoneShuffle(ZoneManager zoneManager, float hudDisplaySeconds)
+    {
+        BeginPending(PickupKind.ShuffleZones);
+        pendingZoneManager = zoneManager;
+        pendingZoneShuffleHudSeconds = hudDisplaySeconds;
     }
 
     public bool TryConsumePending()
@@ -201,11 +220,27 @@ public class PickupEffects : MonoBehaviour
             case PickupKind.SwapZones:
                 if (pendingZoneManager != null)
                 {
-                    pendingZoneManager.SwapPlayerAndEnemyZones();
+                    if (pendingZoneSwapAll)
+                    {
+                        pendingZoneManager.SwapPlayerAndEnemyZones();
+                    }
+                    else
+                    {
+                        pendingZoneManager.SwapPlayerAndEnemyZones(pendingZoneSwapCount);
+                    }
+
                     ShowZoneSwapHud(pendingZoneSwapHudSeconds);
                     activated = true;
                 }
 
+                break;
+            case PickupKind.ShuffleZones:
+                if (pendingZoneManager != null)
+                {
+                    pendingZoneManager.RandomizeAllZonesOwners();
+                    ShowZoneShuffleHud(pendingZoneShuffleHudSeconds);
+                    activated = true;
+                }
                 break;
         }
 
@@ -240,6 +275,15 @@ public class PickupEffects : MonoBehaviour
         hasPending = false;
         pendingGrenadePrefab = null;
         pendingZoneManager = null;
+        pendingInstantCaptureSeconds = 0f;
+        pendingTimeSlowSeconds = 0f;
+        pendingTimeSlowScale = 1f;
+        pendingGrenadeThrowForce = 0f;
+        pendingGrenadeUpwardAngleDegrees = 0f;
+        pendingZoneSwapHudSeconds = 0f;
+        pendingZoneSwapAll = false;
+        pendingZoneSwapCount = 0;
+        pendingZoneShuffleHudSeconds = 0f;
     }
 
     private static void ThrowGrenade(GameObject prefab, float throwForce, float upwardAngleDegrees)
@@ -271,8 +315,16 @@ public class PickupEffects : MonoBehaviour
         }
     }
 
+    public void ShowZoneShuffleHud(float seconds)
+    {
+        float candidate = Time.time + seconds + ActivePickupHudLingerSeconds;
+        if (candidate > zoneShuffleHudExpireAt)
+        {
+            zoneShuffleHudExpireAt = candidate;
+        }
+    }
+
     //Slow down the enemy movement and animation speed but keep the player's movement and camera speed unaffected.
-    /// <returns>False if no enemy exists yet (pending power-up is not cleared so the player can try again).</returns>
     public bool ActivateTimeSlow(float seconds, float scale)
     {
         if (seconds <= 0f)
@@ -381,6 +433,7 @@ public class PickupEffects : MonoBehaviour
     {
         instantCaptureExpireAt = 0f;
         zoneSwapHudExpireAt = 0f;
+        zoneShuffleHudExpireAt = 0f;
         timeSlowHudExpireAt = 0f;
         ClearPending();
         StopEnemySlow();

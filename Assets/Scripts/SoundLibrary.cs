@@ -5,7 +5,7 @@ public class SoundLibrary : MonoBehaviour
 {
     public static SoundLibrary Instance;
 
-    //SFX
+    [Header("Game SFX")]
     [SerializeField] private AudioClip menuNavSfx;
     [SerializeField] private AudioClip victorySfx;
     [SerializeField] private AudioClip playerZoneCaptureSfx;
@@ -24,11 +24,11 @@ public class SoundLibrary : MonoBehaviour
     [SerializeField] private AudioClip grenadeReadyPickupSfx;
     [SerializeField] private AudioClip timeSlowPickupSfx;
     [SerializeField] private AudioClip swapZonesPickupSfx;
+    [SerializeField] private AudioClip shuffleZonesPickupSfx;
 
     [Header("Grenade explosion")]
     [SerializeField] private AudioClip grenadeExplosionSfx;
 
-    //Music
     [Header("Music — AR setup / scan")]
     [SerializeField] private List<AudioClip> setupMusicTracks = new List<AudioClip>();
 
@@ -42,12 +42,12 @@ public class SoundLibrary : MonoBehaviour
     public AudioClip PlayerHurtSfx => playerHurtSfx;
     public AudioClip PlayerDeadSfx => playerDeadSfx;
     public AudioClip EnemyWinSfx => enemyWinSfx;
-    public List<AudioClip> GetSetupMusicPlaylist() =>
-        BuildPlaylist(setupMusicTracks);
 
-    public List<AudioClip> GetMusicPlaylist() =>
-        BuildPlaylist(musicTracks);
+    public List<AudioClip> GetSetupMusicPlaylist() => BuildPlaylist(setupMusicTracks);
+    public List<AudioClip> GetMusicPlaylist() => BuildPlaylist(musicTracks);
 
+
+    //builds a playlist of audio clips
     private static List<AudioClip> BuildPlaylist(List<AudioClip> tracks)
     {
         var playlist = new List<AudioClip>();
@@ -69,6 +69,8 @@ public class SoundLibrary : MonoBehaviour
     public AudioClip GrenadeExplosionSfx => grenadeExplosionSfx;
     public AudioClip DefaultPickupSfx => defaultPickupSfx;
 
+
+    //Switch statement to return the correct audio clip for the pickup kind
     public AudioClip GetPickupActivationSfx(PickupKind kind)
     {
         switch (kind)
@@ -81,6 +83,8 @@ public class SoundLibrary : MonoBehaviour
                 return timeSlowPickupSfx;
             case PickupKind.SwapZones:
                 return swapZonesPickupSfx;
+            case PickupKind.ShuffleZones:
+                return shuffleZonesPickupSfx;
             default:
                 return null;
         }

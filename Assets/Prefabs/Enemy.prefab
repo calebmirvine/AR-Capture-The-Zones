@@ -126,8 +126,8 @@ MonoBehaviour:
   agent: {fileID: -2993903109304674815}
   zoneManager: {fileID: 1714805978923968755, guid: 19f999422de4c472196a876f2c721b18, type: 3}
   attackRange: 1
-  attackRangeStop: 2.5
-  chaseRange: 4
+  attackRangeStop: 2
+  chaseRange: 5
   chaseHandoffDelay: 0.28
   grenadeKnockbackDistancePerForce: 0.012
   grenadeStunDuration: 5
@@ -317,7 +317,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyFootDamage
   damage: 1
-  overlapRadius: 0.55
 --- !u!1001 &3815802194838058555
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -537,7 +536,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyFootDamage
   damage: 1
-  overlapRadius: 0.55
 --- !u!1 &4969012419150429202 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 73ffbc06802a247cfb1b26f4ee67eba8, type: 3}

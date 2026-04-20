@@ -1,6 +1,6 @@
 using UnityEngine;
 
-/// <summary>Grenade hit reaction: hold the agent until <see cref="Enemy.IsGrenadeStunActive"/> expires, then clear IsStunned so the controller can exit.</summary>
+// Grenade hit reaction: hold the agent until IsGrenadeStunActive expires, then clear IsStunned so the controller can exit.
 public class EnemyStunnedState : EnemyStateMachineBehaviour
 {
     public override void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)

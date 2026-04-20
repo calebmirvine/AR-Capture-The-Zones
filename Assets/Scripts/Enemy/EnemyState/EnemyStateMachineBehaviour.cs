@@ -25,7 +25,7 @@ public class EnemyStateMachineBehaviour : StateMachineBehaviour
         }
     }
 
-    /// <summary>Kinematic grenade stun runs on <see cref="Enemy"/> timing; block other SMB logic until the animator transitions to Stunned.</summary>
+    // Stops the enemy movement and sets the speed to 0 when the grenade stun is active
     protected bool BlockStateWhenGrenadeStunned(Animator animator)
     {
         if (enemy != null && enemy.IsGrenadeStunActive)

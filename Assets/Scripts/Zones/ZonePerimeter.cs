@@ -11,11 +11,6 @@ public class ZonePerimeter : MonoBehaviour
     [Header("Soft boundary (one-way: in allowed, then cannot leave XZ)")]
     [SerializeField] [Min(1f)] private float playAreaTriggerHeight = 6f;
 
-    [Header("Debug")]
-    [SerializeField] private bool drawPerimeterDebugGizmos = true;
-    [SerializeField] private Color playAreaVolumeGizmoColor = new Color(0f, 0.85f, 1f, 0.9f);
-    [SerializeField] private Color floorClampBoundsGizmoColor = new Color(0.2f, 1f, 0.35f, 0.95f);
-
     public static Transform ActivePlaneTransform { get; private set; }
     public static Vector2 ActivePlaneSize { get; private set; }
     public static bool HasActiveBounds => ActivePlaneTransform != null;
@@ -94,43 +89,5 @@ public class ZonePerimeter : MonoBehaviour
         boxCollider.isTrigger = true;
         boxCollider.center = Vector3.zero;
         boxCollider.size = new Vector3(planeSize.x, playAreaTriggerHeight, planeSize.y);
-    }
-
-    private void OnDrawGizmos()
-    {
-        if (!drawPerimeterDebugGizmos || !HasActiveBounds)
-        {
-            return;
-        }
-
-        Transform plane = ActivePlaneTransform;
-        Vector2 sz = ActivePlaneSize;
-
-        Matrix4x4 previousMatrix = Gizmos.matrix;
-        Color previousColor = Gizmos.color;
-
-        // PlayArea trigger volume (same local center/size as CreatePlayAreaTrigger).
-        Gizmos.matrix = plane.localToWorldMatrix;
-        Gizmos.color = playAreaVolumeGizmoColor;
-        Vector3 triggerCenter = new Vector3(0f, playAreaTriggerHeight * 0.5f, 0f);
-        Vector3 triggerSize = new Vector3(sz.x, playAreaTriggerHeight, sz.y);
-        Gizmos.DrawWireCube(triggerCenter, triggerSize);
-
-        // Floor XZ clamp rectangle (matches Gernade FixedUpdate half extents).
-        Gizmos.color = floorClampBoundsGizmoColor;
-        float halfX = sz.x * 0.5f;
-        float halfZ = sz.y * 0.5f;
-        float y = 0.02f;
-        Vector3 c00 = new Vector3(-halfX, y, -halfZ);
-        Vector3 c01 = new Vector3(-halfX, y, halfZ);
-        Vector3 c10 = new Vector3(halfX, y, -halfZ);
-        Vector3 c11 = new Vector3(halfX, y, halfZ);
-        Gizmos.DrawLine(c00, c01);
-        Gizmos.DrawLine(c01, c11);
-        Gizmos.DrawLine(c11, c10);
-        Gizmos.DrawLine(c10, c00);
-
-        Gizmos.matrix = previousMatrix;
-        Gizmos.color = previousColor;
     }
 }
