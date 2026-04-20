@@ -8,15 +8,10 @@ using UnityEngine;
 public class SpawnItems : MonoBehaviour
 {
     [SerializeField] private ZoneManager zoneManager;
-
     [SerializeField] private List<GameObject> pickupPrefabs = new List<GameObject>();
-
     [SerializeField] private float minSpawnDelay = 3f;
-
     [SerializeField] private float maxSpawnDelay = 7f;
-
     [SerializeField] private int maxActivePickups = 2;
-
     [SerializeField] private float spawnHeightOffset = 0.5f;
 
     private Coroutine spawnLoopCoroutine;

@@ -8,9 +8,10 @@ public class MiscPopup : BasePopup
     [SerializeField] private SettingsPopup settingsPopup;
     [SerializeField] private Toggle vibrationToggle;
 
-    private void OnEnable() =>
+    private void OnEnable()
+    {
         SyncVibrationToggle();
-
+    }
 
     public void OnBackButton()
     {
@@ -24,6 +25,7 @@ public class MiscPopup : BasePopup
     {
         PlayNavigationSfx();
         PlayerPrefs.SetInt(PP_VIBRATION_ENABLED, isEnabled ? 1 : 0);
+        PlayerPrefs.Save();
 
         if (isEnabled)
         {

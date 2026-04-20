@@ -101,8 +101,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TimeSlowPickup
   pickupRadius: 0.35
-  pickupSound: {fileID: 0}
-  durationSeconds: 5
+  durationSeconds: 10
   timeScale: 0.3
 --- !u!114 &4766809900141151664
 MonoBehaviour:

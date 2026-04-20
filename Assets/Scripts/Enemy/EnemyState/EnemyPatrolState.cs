@@ -1,18 +1,18 @@
 using UnityEngine;
 
-/// <summary>Walk toward capture targets; may switch to Idle, Chase, Capture, or Attack.</summary>
+/// <summary>Walk toward capture targets; may switch to Chase, Capture, or Attack (no idle when idle targets).</summary>
 public class EnemyPatrolState : EnemyStateMachineBehaviour
 {
     private bool captureRequested;
     private bool chaseRequested;
-    private bool idleEmittedForNoTargets;
+    private bool idleHandoffTriggered;
 
     public override void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
         base.OnStateEnter(animator, stateInfo, layerIndex);
         captureRequested = false;
         chaseRequested = false;
-        idleEmittedForNoTargets = false;
+        idleHandoffTriggered = false;
         animator.SetBool(CapturingParam, false);
 
         agent.updateRotation = true;
@@ -35,8 +35,6 @@ public class EnemyPatrolState : EnemyStateMachineBehaviour
 
         agent.updateRotation = true;
 
-        enemy.ResumeMovement();
-
         if (TryTriggerAttackIfInRange(animator))
         {
             return;
@@ -52,11 +50,27 @@ public class EnemyPatrolState : EnemyStateMachineBehaviour
             return;
         }
 
+        enemy.ResumeMovement();
+
         if (TryBeginChase(animator, ref chaseRequested))
         {
             return;
         }
 
+        if (!enemy.HasEnemyCaptureTargets() && !enemy.ShouldChasePlayer())
+        {
+            enemy.StopMovement();
+            animator.SetFloat(SpeedParam, 0f);
+            if (!idleHandoffTriggered)
+            {
+                idleHandoffTriggered = true;
+                animator.SetTrigger(IdleParam);
+            }
+
+            return;
+        }
+
+        idleHandoffTriggered = false;
         if (enemy.ShouldChooseNewZone())
         {
             enemy.FindAndMoveToZone();
@@ -65,14 +79,9 @@ public class EnemyPatrolState : EnemyStateMachineBehaviour
         animator.SetFloat(SpeedParam, agent.velocity.magnitude);
         animator.SetBool(CapturingParam, false);
 
-        if (enemy.HasEnemyCaptureTargets())
+        if (!enemy.HasEnemyCaptureTargets() && TryBeginChase(animator, ref chaseRequested))
         {
-            idleEmittedForNoTargets = false;
-        }
-        else if (!idleEmittedForNoTargets)
-        {
-            idleEmittedForNoTargets = true;
-            animator.SetTrigger(IdleParam);
+            return;
         }
     }
 

@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6680839041522460137}
   - component: {fileID: 1714805978923968755}
+  - component: {fileID: -2496025221358473936}
   m_Layer: 0
   m_Name: ZoneManager
   m_TagString: Untagged
@@ -51,9 +52,26 @@ MonoBehaviour:
   floorMaterialEnemy: {fileID: 2100000, guid: 0da86cb71d67e41e49bfda21268784dd, type: 2}
   floorMaterialNeutral: {fileID: 2100000, guid: cdaf2806ba0ce4403ad289996f6743dc, type: 2}
   floorMaterialContested: {fileID: 2100000, guid: 5fa2b3482983044da94c7df4a6cc80f4, type: 2}
-  flagPrefabNeutral: {fileID: 8159476798780534479, guid: d0d5156fe0cf74bc1beaf728ca8a5fb8, type: 3}
-  flagPrefabPlayer: {fileID: 4632929899598253275, guid: b44f512cd3dde44e1bc19871ec9fa61c, type: 3}
-  flagPrefabEnemy: {fileID: 6181948281431164187, guid: 554034c58158044ddb8b4bd1445a6d40, type: 3}
-  flagPrefabContested: {fileID: 1943822945330447383, guid: 01c1a61bea23f493388b78a547d577ea, type: 3}
-  secondsToCapture: 10
-  secondsToDrain: 3
+  flagPrefabNeutral: {fileID: 272677629430504020, guid: e130fd177cb3548c3a7b3da4a367bc1e, type: 3}
+  flagPrefabPlayer: {fileID: 272677629430504020, guid: 27af3d5a2891244f08b7b674e9126ae0, type: 3}
+  flagPrefabEnemy: {fileID: 272677629430504020, guid: 350a9da6906d3465ea5f5fd03094926a, type: 3}
+  flagPrefabContested: {fileID: 272677629430504020, guid: 5114cb43dd5b8461c84abbd89f1669ad, type: 3}
+  playerSecondsToCapture: 3
+  enemySecondsToCapture: 3
+  zones: []
+--- !u!114 &-2496025221358473936
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7181952544709369220}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7edd67aa63b174973b10a20b16eaba38, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ZonePerimeter
+  playAreaTriggerHeight: 6
+  createSolidBarriers: 0
+  barrierHeight: 0.35
+  barrierThickness: 0.05

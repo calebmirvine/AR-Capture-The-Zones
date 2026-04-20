@@ -32,18 +32,10 @@ public class EnemyIdleState : EnemyStateMachineBehaviour
 
         if (enemy.IsZoneContestedWithPlayer())
         {
-            enemy.StopMovement();
-            animator.SetFloat(SpeedParam, 0f);
             animator.SetBool(CapturingParam, false);
-            animator.SetBool(IsAttackingParam, false);
         }
 
         if (TryTriggerAttackIfInRange(animator))
-        {
-            return;
-        }
-
-        if (HandleCapturableZone(animator, ref captureRequested))
         {
             return;
         }
@@ -53,10 +45,22 @@ public class EnemyIdleState : EnemyStateMachineBehaviour
             return;
         }
 
+        if (HandleCapturableZone(animator, ref captureRequested))
+        {
+            return;
+        }
+
         if (!patrolTriggered && enemy.ShouldRotateFromContestedZone())
         {
             patrolTriggered = true;
             animator.SetTrigger(PatrolParam);
+            return;
+        }
+
+        if (!enemy.HasEnemyCaptureTargets() && !enemy.ShouldChasePlayer())
+        {
+            enemy.StopMovement();
+            animator.SetFloat(SpeedParam, 0f);
             return;
         }
 

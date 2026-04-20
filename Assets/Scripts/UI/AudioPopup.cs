@@ -34,11 +34,11 @@ public class AudioPopup : BasePopup
     private void SyncSliderValuesFromSoundManager()
     {
         //Music
-        musicSlider.value = SoundManager.Instance.MusicVolume;
+        musicSlider.SetValueWithoutNotify(SoundManager.Instance.MusicVolume);
         musicToggle.SetIsOnWithoutNotify(SoundManager.Instance.MusicPlaying);
 
         //SFX
-        sfxSlider.value = SoundManager.Instance.SfxVolume;
+        sfxSlider.SetValueWithoutNotify(SoundManager.Instance.SfxVolume);
         sfxToggle.SetIsOnWithoutNotify(SoundManager.Instance.SfxPlaying);
     }
 
@@ -53,5 +53,4 @@ public class AudioPopup : BasePopup
         PlayNavigationSfx();
         SoundManager.Instance.SfxPlaying = isPlaying;
     }
-
 }

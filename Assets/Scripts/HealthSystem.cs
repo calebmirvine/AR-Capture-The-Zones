@@ -39,6 +39,38 @@ public class HealthSystem : MonoBehaviour
         NotifyHealthChanged();
     }
 
+    private void OnEnable()
+    {
+        Messenger.AddListener(GameEvent.GAME_RESET_REQUESTED, OnGameResetOrMatchStart);
+        Messenger.AddListener(GameEvent.GAMEPLAY_STARTED, OnGameResetOrMatchStart);
+    }
+
+    private void OnDisable()
+    {
+        Messenger.RemoveListener(GameEvent.GAME_RESET_REQUESTED, OnGameResetOrMatchStart);
+        Messenger.RemoveListener(GameEvent.GAMEPLAY_STARTED, OnGameResetOrMatchStart);
+    }
+
+    private void OnGameResetOrMatchStart()
+    {
+        ResetToFullHealth();
+    }
+
+    public void ResetToFullHealth()
+    {
+        if (ghostCoroutine != null)
+        {
+            StopCoroutine(ghostCoroutine);
+            ghostCoroutine = null;
+        }
+
+        isGhost = false;
+        ghostTimeRemaining = 0f;
+        currentHealth = maxHealth;
+        invulnerableUntilTime = Time.time + spawnInvulnerabilitySeconds;
+        NotifyHealthChanged();
+    }
+
     private void OnDestroy()
     {
         if (Instance == this)
@@ -61,6 +93,16 @@ public class HealthSystem : MonoBehaviour
 
         currentHealth -= damage;
         Debug.Log($"Took {damage} damage, health remaining: {currentHealth}");
+
+        SoundLibrary library = SoundLibrary.Instance;
+        if (library != null)
+        {
+            AudioClip hurtSfx = library.PlayerHurtSfx;
+            if (hurtSfx != null)
+            {
+                SoundManager.Instance.PlaySfx(hurtSfx);
+            }
+        }
 
         if (currentHealth > 0)
         {

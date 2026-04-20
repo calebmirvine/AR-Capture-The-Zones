@@ -94,18 +94,12 @@ public class StartButtonController : MonoBehaviour
     private static void TryPlayScanningMusic()
     {
         SoundLibrary library = SoundLibrary.Instance;
-        if (library == null)
+        if (library == null || SoundManager.Instance == null)
         {
             return;
         }
 
-        AudioClip clip = library.ScanningMusic;
-        if (clip == null || SoundManager.Instance == null)
-        {
-            return;
-        }
-
-        SoundManager.Instance.PlayMusic(clip);
+        SoundManager.Instance.PlayMusicPlaylist(library.GetSetupMusicPlaylist());
     }
 
 //A plane grows and shifts, we need to find the largest plane to use for the game

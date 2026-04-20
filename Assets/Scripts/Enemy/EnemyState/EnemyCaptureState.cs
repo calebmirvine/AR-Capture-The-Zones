@@ -11,10 +11,19 @@ public class EnemyCaptureState : EnemyStateMachineBehaviour
         animator.SetBool(CapturingParam, true);
         animator.SetInteger(DanceIdxParam, Random.Range(0, danceVariantCount));
         animator.SetFloat(SpeedParam, 0f);
+        if (enemy != null)
+        {
+            enemy.StopMovement();
+        }
     }
 
     public override void OnStateUpdate(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
+        if (enemy != null && enemy.IsInCapturableZone())
+        {
+            enemy.StopMovement();
+        }
+
         TryTriggerAttackIfInRange(animator);
 
         // Transitions out of capture require IsCapturing false before OnStateExit; Patrol/Chase SMBs

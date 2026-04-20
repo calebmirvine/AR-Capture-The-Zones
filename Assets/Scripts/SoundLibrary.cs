@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class SoundLibrary : MonoBehaviour
@@ -11,6 +12,7 @@ public class SoundLibrary : MonoBehaviour
     [SerializeField] private AudioClip enemyZoneCaptureSfx;
 
     [Header("Match / player")]
+    [SerializeField] private AudioClip playerHurtSfx;
     [SerializeField] private AudioClip playerDeadSfx;
     [SerializeField] private AudioClip enemyWinSfx;
 
@@ -27,18 +29,43 @@ public class SoundLibrary : MonoBehaviour
     [SerializeField] private AudioClip grenadeExplosionSfx;
 
     //Music
-    [Header("Music")]
-    [SerializeField] private AudioClip scanningMusic;
-    [SerializeField] private AudioClip gameMusic;
+    [Header("Music — AR setup / scan")]
+    [SerializeField] private List<AudioClip> setupMusicTracks = new List<AudioClip>();
+
+    [Header("Music — gameplay")]
+    [SerializeField] private List<AudioClip> musicTracks = new List<AudioClip>();
 
     public AudioClip MenuNavSfx => menuNavSfx;
     public AudioClip VictorySfx => victorySfx;
     public AudioClip PlayerZoneCaptureSfx => playerZoneCaptureSfx;
     public AudioClip EnemyZoneCaptureSfx => enemyZoneCaptureSfx;
+    public AudioClip PlayerHurtSfx => playerHurtSfx;
     public AudioClip PlayerDeadSfx => playerDeadSfx;
     public AudioClip EnemyWinSfx => enemyWinSfx;
-    public AudioClip ScanningMusic => scanningMusic;
-    public AudioClip GameMusic => gameMusic;
+    public List<AudioClip> GetSetupMusicPlaylist() =>
+        BuildPlaylist(setupMusicTracks);
+
+    public List<AudioClip> GetMusicPlaylist() =>
+        BuildPlaylist(musicTracks);
+
+    private static List<AudioClip> BuildPlaylist(List<AudioClip> tracks)
+    {
+        var playlist = new List<AudioClip>();
+        if (tracks == null)
+        {
+            return playlist;
+        }
+
+        foreach (AudioClip track in tracks)
+        {
+            if (track != null)
+            {
+                playlist.Add(track);
+            }
+        }
+
+        return playlist;
+    }
     public AudioClip GrenadeExplosionSfx => grenadeExplosionSfx;
     public AudioClip DefaultPickupSfx => defaultPickupSfx;
 

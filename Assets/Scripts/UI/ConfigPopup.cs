@@ -28,23 +28,7 @@ public class ConfigPopup : BasePopup
 
     private void OnEnable()
     {
-        int rows = Mathf.RoundToInt(rowsSlider.value);
-        int columns = Mathf.RoundToInt(columnsSlider.value);
-        int playerCaptureSeconds = Mathf.RoundToInt(playerCaptureSlider.value);
-        int enemyCaptureSeconds = Mathf.RoundToInt(enemyCaptureSlider.value);
-        int gameTimeSeconds = Mathf.RoundToInt(gameTimeSlider.value);
-
-        UpdateRowsLabel(rows);
-        UpdateColumnsLabel(columns);
-        UpdatePlayerCaptureLabel(playerCaptureSeconds);
-        UpdateEnemyCaptureLabel(enemyCaptureSeconds);
-        UpdateGameTimeLabel(gameTimeSeconds);
-
-        zoneManager.SetRows(rows);
-        zoneManager.SetColumns(columns);
-        zoneManager.SetPlayerSecondsToCapture(playerCaptureSeconds);
-        zoneManager.SetEnemySecondsToCapture(enemyCaptureSeconds);
-        uiManager.SetMatchDurationSeconds(gameTimeSeconds);
+        SyncSliderValuesFromManagers();
     }
 
     public void OnRowsSliderValueChanged(float value)
@@ -80,6 +64,21 @@ public class ConfigPopup : BasePopup
         int gameTimeSeconds = Mathf.RoundToInt(value);
         UpdateGameTimeLabel(gameTimeSeconds);
         uiManager.SetMatchDurationSeconds(gameTimeSeconds);
+    }
+
+    private void SyncSliderValuesFromManagers()
+    {
+        rowsSlider.SetValueWithoutNotify(zoneManager.Rows);
+        columnsSlider.SetValueWithoutNotify(zoneManager.Columns);
+        playerCaptureSlider.SetValueWithoutNotify(zoneManager.PlayerSecondsToCapture);
+        enemyCaptureSlider.SetValueWithoutNotify(zoneManager.EnemySecondsToCapture);
+        gameTimeSlider.SetValueWithoutNotify(uiManager.MatchDurationSeconds);
+
+        UpdateRowsLabel(zoneManager.Rows);
+        UpdateColumnsLabel(zoneManager.Columns);
+        UpdatePlayerCaptureLabel(Mathf.RoundToInt(zoneManager.PlayerSecondsToCapture));
+        UpdateEnemyCaptureLabel(Mathf.RoundToInt(zoneManager.EnemySecondsToCapture));
+        UpdateGameTimeLabel(Mathf.RoundToInt(uiManager.MatchDurationSeconds));
     }
 
     private void UpdateRowsLabel(int value)

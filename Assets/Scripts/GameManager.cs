@@ -38,7 +38,7 @@ public class GameManager : MonoBehaviour
     private void OnGameplayStarted()
     {
         DestroyActiveEnemy();
-        SoundManager.Instance.PlayMusic(SoundLibrary.Instance.GameMusic);
+        SoundManager.Instance.PlayMusicPlaylist(SoundLibrary.Instance.GetMusicPlaylist());
         SpawnEnemyInRandomZone();
     }
 
@@ -70,11 +70,9 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    private void OnPlayerCapturedZone(Zone capturedZone)
-    => Handheld.Vibrate();
+    private void OnPlayerCapturedZone(Zone capturedZone) => Handheld.Vibrate();
 
-    private void OnGameResetRequested()
-    => DestroyActiveEnemy();
+    private void OnGameResetRequested() => DestroyActiveEnemy();
 
     private void DestroyActiveEnemy()
     {

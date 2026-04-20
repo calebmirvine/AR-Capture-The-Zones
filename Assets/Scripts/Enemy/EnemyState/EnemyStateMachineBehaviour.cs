@@ -17,7 +17,7 @@ public class EnemyStateMachineBehaviour : StateMachineBehaviour
     public override void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
         enemy = animator.GetComponentInParent<Enemy>();
-        agent = enemy.Agent;
+        agent = enemy != null ? enemy.Agent : null;
     }
 
     // Clears chaseRequested when out of aggro so Chase can trigger again later.
@@ -30,7 +30,7 @@ public class EnemyStateMachineBehaviour : StateMachineBehaviour
     }
 
 
-    // Contested tile with player: stop and clear capture/attack; stay on current animator state (no Idle).
+    // Contested tile: never capture-dance here; let chase / attack run instead of freezing the agent.
     protected bool HandleContestedZone(Animator animator)
     {
         if (!enemy.IsZoneContestedWithPlayer())
@@ -38,47 +38,64 @@ public class EnemyStateMachineBehaviour : StateMachineBehaviour
             return false;
         }
 
+        animator.SetBool(CapturingParam, false);
+
+        if (enemy.ShouldChasePlayer())
+        {
+            return false;
+        }
+
         enemy.StopMovement();
         animator.SetFloat(SpeedParam, 0f);
-        animator.SetBool(CapturingParam, false);
         animator.SetBool(IsAttackingParam, false);
         return true;
     }
 
-    //Enter or continue capture dance; stops agent on first entry.
+    // Enter or continue capture dance; keeps agent stopped while on tile.
     protected bool HandleCapturableZone(Animator animator, ref bool captureRequested)
     {
         if (!enemy.IsInCapturableZone())
         {
+            captureRequested = false;
             return false;
         }
 
         if (!captureRequested)
         {
             captureRequested = true;
-            enemy.StopMovement();
             animator.SetFloat(SpeedParam, 0f);
         }
 
+        enemy.StopMovement();
         animator.SetBool(CapturingParam, true);
         return true;
     }
 
     protected bool TryTriggerAttackIfInRange(Animator animator)
     {
-        if (!enemy.IsPlayerInAttackRange())
+        if (enemy == null || !enemy.IsPlayerInAttackRange())
         {
             return false;
         }
 
         animator.SetBool(CapturingParam, false);
         animator.SetBool(IsAttackingParam, true);
+        animator.SetFloat(SpeedParam, 0f);
+
         return true;
     }
 
     protected bool TryBeginChase(Animator animator, ref bool chaseRequested)
     {
         if (!enemy.ShouldChasePlayer() || chaseRequested)
+        {
+            return false;
+        }
+
+        // March to capturable zones first; only chase when contesting, hunting with no tiles left, or in attack range.
+        if (enemy.HasEnemyCaptureTargets()
+            && !enemy.IsZoneContestedWithPlayer()
+            && !enemy.IsPlayerInAttackRange())
         {
             return false;
         }

@@ -3,7 +3,6 @@ using UnityEngine;
 public class EnemyFootDamage : MonoBehaviour
 {
     private const string PlayerTag = "Player";
-
     private int damage = 1;
 
     private void OnTriggerEnter(Collider other)
@@ -14,11 +13,6 @@ public class EnemyFootDamage : MonoBehaviour
         }
 
         HealthSystem healthSystem = other.GetComponentInParent<HealthSystem>();
-        if (healthSystem == null)
-        {
-            healthSystem = other.GetComponent<HealthSystem>();
-        }
-
         if (healthSystem == null)
         {
             return;

@@ -25,6 +25,7 @@ public class ActivePickupHudView : MonoBehaviour
     private Graphic buttonTintGraphic;
     private GameObject spawnedDisplay;
     private PickupKind? lastShownKind;
+    private bool wasPendingPowerup;
     private Color defaultTintColor = Color.white;
     private bool hasCachedDefaultTint;
     private ColorBlock pickupButtonColorsInitial;
@@ -72,6 +73,15 @@ public class ActivePickupHudView : MonoBehaviour
         {
             return;
         }
+
+        bool pendingNow = fx.HasPendingPowerup;
+        if (pendingNow != wasPendingPowerup)
+        {
+            lastShownKind = null;
+            ClearSpawnedDisplay();
+        }
+
+        wasPendingPowerup = pendingNow;
 
         PickupKind? current = null;
         GameObject prefab = null;
@@ -149,6 +159,7 @@ public class ActivePickupHudView : MonoBehaviour
     private void OnGameResetRequested()
     {
         lastShownKind = null;
+        wasPendingPowerup = false;
         ClearSpawnedDisplay();
     }
 

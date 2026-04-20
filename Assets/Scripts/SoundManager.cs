@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Audio;
 
@@ -11,6 +13,7 @@ public class SoundManager : MonoBehaviour
     private float musicVolume = 1f;
     private bool sfxPlaying = true;
     private bool musicPlaying = true;
+    private Coroutine musicPlaylistCoroutine;
 
     const string PP_MUSIC_VOLUME = "MusicVolume";
     const string PP_SFX_VOLUME = "SfxVolume";
@@ -43,6 +46,7 @@ public class SoundManager : MonoBehaviour
         {
             sfxPlaying = value;
             ApplySfxVolume();
+            SaveAudioPrefs();
         }
     }
     public bool MusicPlaying
@@ -52,15 +56,18 @@ public class SoundManager : MonoBehaviour
         {
             musicPlaying = value;
             ApplyMusicVolume();
+            SaveAudioPrefs();
         }
     }
 
-    private void OnDestroy()
+    private void OnDestroy() => SaveAudioPrefs();
+
+    private void OnApplicationPause(bool pauseStatus)
     {
-        PlayerPrefs.SetFloat(PP_MUSIC_VOLUME, musicVolume);
-        PlayerPrefs.SetFloat(PP_SFX_VOLUME, sfxVolume);
-        PlayerPrefs.SetInt(PP_MUSIC_PLAYING, musicPlaying ? 1 : 0);
-        PlayerPrefs.SetInt(PP_SFX_PLAYING, sfxPlaying ? 1 : 0);
+        if (pauseStatus)
+        {
+            SaveAudioPrefs();
+        }
     }
 
     private void Awake()
@@ -86,6 +93,22 @@ public class SoundManager : MonoBehaviour
 
         ApplyMusicVolume();
         ApplySfxVolume();
+    }
+
+    private void Start()
+    {
+        // AudioMixer may ignore SetFloat during Awake; re-apply once the audio system is ready.
+        ApplyMusicVolume();
+        ApplySfxVolume();
+    }
+
+    private void SaveAudioPrefs()
+    {
+        PlayerPrefs.SetFloat(PP_MUSIC_VOLUME, musicVolume);
+        PlayerPrefs.SetFloat(PP_SFX_VOLUME, sfxVolume);
+        PlayerPrefs.SetInt(PP_MUSIC_PLAYING, musicPlaying ? 1 : 0);
+        PlayerPrefs.SetInt(PP_SFX_PLAYING, sfxPlaying ? 1 : 0);
+        PlayerPrefs.Save();
     }
 
     private void ApplyMusicVolume()
@@ -125,13 +148,56 @@ public class SoundManager : MonoBehaviour
 
     public void PlayMusic(AudioClip clip, float volume = 1f)
     {
+        StopMusicPlaylist();
+        musicSource.loop = true;
         musicSource.clip = clip;
         musicSource.volume = volume;
         musicSource.Play();
     }
 
+    public void PlayMusicPlaylist(List<AudioClip> playlist, float volume = 1f)
+    {
+        StopMusicPlaylist();
+        if (playlist == null || playlist.Count == 0)
+        {
+            return;
+        }
+
+        musicSource.loop = false;
+        musicPlaylistCoroutine = StartCoroutine(RunMusicPlaylist(playlist, volume));
+    }
+
+    private IEnumerator RunMusicPlaylist(List<AudioClip> playlist, float volume)
+    {
+        int trackCount = playlist.Count;
+        int index = Random.Range(0, trackCount);
+        while (true)
+        {
+            AudioClip track = playlist[index];
+            musicSource.clip = track;
+            musicSource.volume = volume;
+            musicSource.Play();
+            while (musicSource.isPlaying)
+            {
+                yield return null;
+            }
+
+            index = (index + 1) % trackCount;
+        }
+    }
+
+    private void StopMusicPlaylist()
+    {
+        if (musicPlaylistCoroutine != null)
+        {
+            StopCoroutine(musicPlaylistCoroutine);
+            musicPlaylistCoroutine = null;
+        }
+    }
+
     public void StopMusic()
     {
+        StopMusicPlaylist();
         musicSource.Stop();
     }
 }

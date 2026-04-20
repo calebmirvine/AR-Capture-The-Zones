@@ -26,7 +26,7 @@ RenderSettings:
   m_AmbientIntensity: 1
   m_AmbientMode: 0
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
-  m_SkyboxMaterial: {fileID: 10304, guid: 0000000000000000f000000000000000, type: 0}
+  m_SkyboxMaterial: {fileID: 2100000, guid: a138292d70b9e4b7ca7683e487e06736, type: 2}
   m_HaloStrength: 0.5
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
@@ -263,7 +263,7 @@ GameObject:
   - component: {fileID: 27328523}
   - component: {fileID: 27328525}
   - component: {fileID: 27328524}
-  m_Layer: 5
+  m_Layer: 9
   m_Name: Text (TMP)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1324,16 +1324,24 @@ MonoBehaviour:
   victorySfx: {fileID: 8300000, guid: 2acb12b67f8d44146a28877c1ef4659e, type: 3}
   playerZoneCaptureSfx: {fileID: 8300000, guid: 860bafc6042504e03af2329f14df7467, type: 3}
   enemyZoneCaptureSfx: {fileID: 8300000, guid: 4a7682d57397d46189fcd1ec918596ad, type: 3}
+  playerHurtSfx: {fileID: 8300000, guid: 75dd4c649c32e48a094172575a4d9d20, type: 3}
   playerDeadSfx: {fileID: 8300000, guid: 474edcf9512eb46508323a855fc4e9e7, type: 3}
   enemyWinSfx: {fileID: 8300000, guid: e077544fa29f0441da8f10ec552c94b3, type: 3}
   defaultPickupSfx: {fileID: 8300000, guid: 922b484f0de544685a01cffe5b3fee4f, type: 3}
   instantCapturePickupSfx: {fileID: 8300000, guid: 459d2b005ba1e49b2bd4f930358c3f95, type: 3}
   grenadeReadyPickupSfx: {fileID: 8300000, guid: 02013cfa61c1a40a38ad17e8b86ffd54, type: 3}
-  timeSlowPickupSfx: {fileID: 8300000, guid: 869d916a02d3c4429b6f3d020dd37e9b, type: 3}
+  timeSlowPickupSfx: {fileID: 8300000, guid: b4ff1cdd25b15406ba4407e5d5fdb0ab, type: 3}
   swapZonesPickupSfx: {fileID: 8300000, guid: d9baf052da54d4226bc40213dc792f46, type: 3}
   grenadeExplosionSfx: {fileID: 8300000, guid: 0aa0574b6607c4e6ba1dfe984e248641, type: 3}
-  scanningMusic: {fileID: 8300000, guid: 913fabd6d7cf4421a8dbd31918916a0e, type: 3}
-  gameMusic: {fileID: 8300000, guid: 7e2a56c07c7fb4a468a27af2edaa86a7, type: 3}
+  setupMusicTracks:
+  - {fileID: 8300000, guid: d9595ca8f1aa74c9399535cbe6395675, type: 3}
+  - {fileID: 8300000, guid: 913fabd6d7cf4421a8dbd31918916a0e, type: 3}
+  - {fileID: 8300000, guid: 75235fbb2f4e149e3a5c4e16d9184123, type: 3}
+  musicTracks:
+  - {fileID: 8300000, guid: d89b11135a0d84081adc636214bca973, type: 3}
+  - {fileID: 8300000, guid: 7e2a56c07c7fb4a468a27af2edaa86a7, type: 3}
+  - {fileID: 8300000, guid: adaf50eb6e5d4429e964502c062960cd, type: 3}
+  - {fileID: 8300000, guid: 1ec4d648f2e714c51b97e943446dc920, type: 3}
 --- !u!4 &224579842
 Transform:
   m_ObjectHideFlags: 0
@@ -2975,11 +2983,11 @@ RectTransform:
   - {fileID: 2115273796}
   m_Father: {fileID: 988968035}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 1, y: 1}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -32, y: -64}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 32, y: -64}
   m_SizeDelta: {x: 100, y: 100}
-  m_Pivot: {x: 1, y: 1}
+  m_Pivot: {x: 0, y: 1}
 --- !u!114 &548396439
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3340,13 +3348,13 @@ GameObject:
   - component: {fileID: 572353069}
   - component: {fileID: 572353068}
   - component: {fileID: 572353071}
-  m_Layer: 7
+  m_Layer: 9
   m_Name: MenuButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &572353067
 RectTransform:
   m_ObjectHideFlags: 0
@@ -5642,7 +5650,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5aa4b840ac5434d7083278bcb7efc172, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GhostModeUI
-  healthSystem: {fileID: 0}
+  healthSystem: {fileID: 2512387470422636672}
   remainingLabel: {fileID: 1541202689}
   ghostPlayerPanel: {fileID: 1483688080}
 --- !u!1 &995866112
@@ -10318,8 +10326,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ZoneCaptureFeedback
   zoneManager: {fileID: 1714939351}
-  playerCaptureParticlePrefab: {fileID: 0}
-  enemyCaptureParticlePrefab: {fileID: 0}
+  playerCaptureParticlePrefab: {fileID: 7893868422098459270, guid: bcec8fe8cf3764657b587a3c35062f04, type: 3}
+  enemyCaptureParticlePrefab: {fileID: 3536419869503857941, guid: cf5125be7d653486dbf280b9949f4e5a, type: 3}
   particleLifetime: 3
 --- !u!1 &1716395745
 GameObject:
@@ -10958,9 +10966,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: SettingsPopup, Assembly-CSharp
-        m_MethodName: OnResetButton
+      - m_Target: {fileID: 250662385}
+        m_TargetAssemblyTypeName: GameOverPopup, Assembly-CSharp
+        m_MethodName: OnPlayAgainButton
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -11276,8 +11284,8 @@ MonoBehaviour:
   - {fileID: 7823205500758707432, guid: d2275fc619142e94583cd06b9f01e784, type: 3}
   - {fileID: 8050537342152234946, guid: 50e260f821baa56419af96b848301e5d, type: 3}
   - {fileID: 5225455176718880169, guid: 59fd80584945fc7448940995b97dab30, type: 3}
-  minSpawnDelay: 3
-  maxSpawnDelay: 7
+  minSpawnDelay: 5
+  maxSpawnDelay: 10
   maxActivePickups: 2
   spawnHeightOffset: 0.5
 --- !u!114 &1951880156
@@ -12600,6 +12608,18 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: -2496025221358473936, guid: 19f999422de4c472196a876f2c721b18, type: 3}
+      propertyPath: barrierHeight
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: -2496025221358473936, guid: 19f999422de4c472196a876f2c721b18, type: 3}
+      propertyPath: barrierThickness
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: -2496025221358473936, guid: 19f999422de4c472196a876f2c721b18, type: 3}
+      propertyPath: playAreaTriggerHeight
+      value: 5
+      objectReference: {fileID: 0}
     - target: {fileID: 1714805978923968755, guid: 19f999422de4c472196a876f2c721b18, type: 3}
       propertyPath: rows
       value: 3
@@ -12697,7 +12717,7 @@ Camera:
   m_GameObject: {fileID: 2512387468973847775}
   m_Enabled: 1
   serializedVersion: 2
-  m_ClearFlags: 2
+  m_ClearFlags: 1
   m_BackGroundColor: {r: 0, g: 0, b: 0, a: 1}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
@@ -12779,7 +12799,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_UseCustomMaterial: 0
-  m_CustomMaterial: {fileID: 0}
+  m_CustomMaterial: {fileID: 2100000, guid: a138292d70b9e4b7ca7683e487e06736, type: 2}
 --- !u!114 &2512387468973847773
 MonoBehaviour:
   m_ObjectHideFlags: 0

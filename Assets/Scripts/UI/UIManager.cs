@@ -3,14 +3,19 @@ using TMPro;
 
 public class UIManager : MonoBehaviour
 {
+    private const string PP_GAME_TIME = "ConfigGameTimeSeconds";
+
     private const string InGameUiLayerName = "InGameUI";
     private const string PreGameUiLayerName = "PreGameUI";
+    private const string SettingsUiLayerName = "SettingsUI";
     [SerializeField] private TextMeshProUGUI playerScore;
     [SerializeField] private TextMeshProUGUI enemyScore;
     [SerializeField] private TextMeshProUGUI timerText;
     [SerializeField] private GameOverPopup gameOverPopup;
     [SerializeField] private ZoneManager zoneManager;
     private float matchDurationSeconds = ConfigPopup.DefaultGameTimeSeconds;
+
+    public float MatchDurationSeconds => matchDurationSeconds;
 
     private int popupsActive;
     private int playerCapturedCount;
@@ -21,6 +26,7 @@ public class UIManager : MonoBehaviour
     private bool isMatchRunning;
     private int inGameUiLayer;
     private int preGameUiLayer;
+    private int settingsUiLayer;
 
     private const string PlayerScoreLabelFormat = "P1: {0}/{1}";
     private const string EnemyScoreLabelFormat = "AI: {0}/{1}";
@@ -30,6 +36,7 @@ public class UIManager : MonoBehaviour
         //Get the layer index 
         inGameUiLayer = LayerMask.NameToLayer(InGameUiLayerName);
         preGameUiLayer = LayerMask.NameToLayer(PreGameUiLayerName);
+        settingsUiLayer = LayerMask.NameToLayer(SettingsUiLayerName);
 
         Messenger.AddListener(GameEvent.POPUP_OPENED, OnPopupOpened);
         Messenger.AddListener(GameEvent.POPUP_CLOSED, OnPopupClosed);
@@ -41,10 +48,21 @@ public class UIManager : MonoBehaviour
         Messenger<Zone>.AddListener(GameEvent.ZONE_BECAME_ENEMY, OnZoneOwnershipChanged);
         Messenger<Zone>.AddListener(GameEvent.PLAYER_CAPTURED_ZONE, OnPlayerCapturedZone);
         Messenger<Zone>.AddListener(GameEvent.ENEMY_CAPTURED_ZONE, OnEnemyCapturedZone);
+
+        LoadMatchDurationFromPlayerPrefs();
+    }
+
+    private void OnApplicationPause(bool pauseStatus)
+    {
+        if (pauseStatus)
+        {
+            SaveMatchDurationPrefs();
+        }
     }
 
     private void OnDestroy()
     {
+        SaveMatchDurationPrefs();
         Messenger.RemoveListener(GameEvent.POPUP_OPENED, OnPopupOpened);
         Messenger.RemoveListener(GameEvent.POPUP_CLOSED, OnPopupClosed);
         Messenger.RemoveListener(GameEvent.GAMEPLAY_STARTED, OnGameplayStarted);
@@ -55,6 +73,19 @@ public class UIManager : MonoBehaviour
         Messenger<Zone>.RemoveListener(GameEvent.ZONE_BECAME_ENEMY, OnZoneOwnershipChanged);
         Messenger<Zone>.RemoveListener(GameEvent.PLAYER_CAPTURED_ZONE, OnPlayerCapturedZone);
         Messenger<Zone>.RemoveListener(GameEvent.ENEMY_CAPTURED_ZONE, OnEnemyCapturedZone);
+    }
+
+    private void LoadMatchDurationFromPlayerPrefs()
+    {
+        matchDurationSeconds = Mathf.Max(
+            0f,
+            PlayerPrefs.GetInt(PP_GAME_TIME, Mathf.RoundToInt(matchDurationSeconds)));
+    }
+
+    private void SaveMatchDurationPrefs()
+    {
+        PlayerPrefs.SetInt(PP_GAME_TIME, Mathf.RoundToInt(matchDurationSeconds));
+        PlayerPrefs.Save();
     }
 
     private void Start()
@@ -134,6 +165,7 @@ public class UIManager : MonoBehaviour
         UpdateTimerLabel(timeRemaining);
         SetChildrenActiveForLayer(inGameUiLayer, false);
         SetChildrenActiveForLayer(preGameUiLayer, true);
+        SetChildrenActiveForLayer(settingsUiLayer, true);
         SetGameActive(true);
     }
 
@@ -270,6 +302,9 @@ public class UIManager : MonoBehaviour
 
     private void BroadcastMatchResult()
     {
+        SetChildrenActiveForLayer(inGameUiLayer, false);
+        SetChildrenActiveForLayer(settingsUiLayer, false);
+
         if (playerCapturedCount > enemyCapturedCount)
         {
             gameOverPopup.ShowPlayerWinResult();

@@ -52,6 +52,8 @@ public class GameOverPopup : BasePopup
 
     public void ShowEnemyWinResult()
     {
+        ApplyResult(EnemyWinText, EnemyWinColor, false, true);
+
         SoundLibrary library = SoundLibrary.Instance;
         if (library != null)
         {
@@ -61,8 +63,6 @@ public class GameOverPopup : BasePopup
                 SoundManager.Instance.PlaySfx(winSfx);
             }
         }
-
-        ApplyResult(EnemyWinText, EnemyWinColor, false, true);
     }
 
     public void ShowTieResult()
@@ -95,6 +95,8 @@ public class GameOverPopup : BasePopup
 
     private void ApplyResult(string resultText, Color resultColor, bool showWinningStars, bool showLosingStars)
     {
+        SoundManager.Instance.StopMusic();
+
         gameResultText.text = resultText;
         gameResultText.color = resultColor;
         winningStars.SetActive(showWinningStars);

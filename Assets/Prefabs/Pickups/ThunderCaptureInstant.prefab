@@ -101,8 +101,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InstantCapturePickup
   pickupRadius: 0.35
-  pickupSound: {fileID: 0}
-  durationSeconds: 5
+  durationSeconds: 3
 --- !u!114 &175099681030699037
 MonoBehaviour:
   m_ObjectHideFlags: 0

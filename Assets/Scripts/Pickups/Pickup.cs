@@ -38,7 +38,7 @@ public abstract class Pickup : MonoBehaviour
         }
 
         PickupEffects effects = PickupEffects.Instance;
-        if (effects != null && effects.HasPendingPowerup)
+        if (effects != null && effects.IsPickupSlotOccupied)
         {
             return;
         }

@@ -4,8 +4,11 @@
 TagManager:
   serializedVersion: 3
   tags:
+  - Barrier
   - CinemachineTarget
   - Enemy
+  - Grenade
+  - PlayArea
   - FxTemporaire
   - Flag
   - Ground
@@ -20,7 +23,7 @@ TagManager:
   - PreGameUI
   - InGameUI
   - PopupUI
-  - 
+  - SettingsUI
   - 
   - 
   - 
