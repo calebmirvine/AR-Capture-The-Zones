@@ -62,7 +62,7 @@ Rigidbody:
   m_ImplicitCom: 1
   m_ImplicitTensor: 1
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 116
   m_CollisionDetection: 1
@@ -128,8 +128,12 @@ MonoBehaviour:
   attackRange: 1
   attackRangeStop: 2.5
   chaseRange: 4
-  attackEngagePadding: 0.3
+  chaseHandoffDelay: 0.28
   grenadeKnockbackDistancePerForce: 0.012
+  grenadeStunDuration: 5
+  grenadeKnockbackArcDuration: 0.45
+  grenadeKnockbackArcHeight: 0.85
+  animator: {fileID: 1828045900966706386}
 --- !u!114 &7325472213621506714
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -312,6 +316,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 69c63ef0dda7849e09f26c0049c5995e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyFootDamage
+  damage: 1
+  overlapRadius: 0.55
 --- !u!1001 &3815802194838058555
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -460,6 +466,11 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 7861683769637027247}
   m_SourcePrefab: {fileID: 100100000, guid: 73ffbc06802a247cfb1b26f4ee67eba8, type: 3}
+--- !u!95 &1828045900966706386 stripped
+Animator:
+  m_CorrespondingSourceObject: {fileID: 5866666021909216657, guid: 73ffbc06802a247cfb1b26f4ee67eba8, type: 3}
+  m_PrefabInstance: {fileID: 5202805074211504451}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &2792875929519858366 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -1227694366580071427, guid: 73ffbc06802a247cfb1b26f4ee67eba8, type: 3}
@@ -484,8 +495,8 @@ SphereCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Radius: 0.1
-  m_Center: {x: 0, y: 0, z: 0}
+  m_Radius: 0.11585997
+  m_Center: {x: 0.14, y: 0.015859986, z: 0.05}
 --- !u!54 &3772886457636482028
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -525,6 +536,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 69c63ef0dda7849e09f26c0049c5995e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyFootDamage
+  damage: 1
+  overlapRadius: 0.55
 --- !u!1 &4969012419150429202 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 73ffbc06802a247cfb1b26f4ee67eba8, type: 3}

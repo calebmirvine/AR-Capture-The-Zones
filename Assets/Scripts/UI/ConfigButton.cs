@@ -19,6 +19,6 @@ public class ConfigButton : MonoBehaviour
 
     private void PlayNavigationSfx()
     {
-        SoundManager.Instance.PlaySfx(SoundLibrary.Instance.MenuNavSfx);
+        SoundManager.Instance.PlayOneShot(SoundLibrary.Instance.MenuNavSfx);
     }
 }

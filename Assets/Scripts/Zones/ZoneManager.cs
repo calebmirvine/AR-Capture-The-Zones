@@ -3,23 +3,28 @@ using System.Collections.Generic;
 using UnityEngine.AI;
 using Unity.AI.Navigation;
 
-// After floor confirm: spawns zones, optional grid lines, and reads player position from the assigned Main Camera.
+// Grid of capture cells on the AR floor: ownership, contested overlap, per-side capture meters, and runtime NavMesh.
+// Player position comes from Main Camera; enemy from the "Enemy" tag. Grid size / capture times persist in PlayerPrefs.
 public class ZoneManager : MonoBehaviour
 {
     private const float MinCaptureSeconds = 0.1f;
+    private const int MinGridSize = 2;
+    private const int MaxGridSize = 4;
 
     private const string PP_ROWS = "ConfigRows";
     private const string PP_COLUMNS = "ConfigColumns";
     private const string PP_PLAYER_CAPTURE = "ConfigPlayerCaptureSeconds";
     private const string PP_ENEMY_CAPTURE = "ConfigEnemyCaptureSeconds";
 
+    public enum ZoneOwner
+    {
+        Neutral,
+        Contested,
+        Player,
+        Enemy
+    }
+
     [SerializeField] private Transform mainCameraTransform;
-
-    public Transform MainCameraTransform => mainCameraTransform;
-
-    private const int MinGridSize = 2;
-    private const int MaxGridSize = 4;
-
     [SerializeField] private int columns = 3;
     [SerializeField] private int rows = 2;
 
@@ -33,24 +38,38 @@ public class ZoneManager : MonoBehaviour
     [SerializeField] private GameObject flagPrefabEnemy;
     [SerializeField] private GameObject flagPrefabContested;
 
-    private NavMeshSurface runtimeNavMeshSurface;
-
     [SerializeField] private float playerSecondsToCapture = 3f;
     [SerializeField] private float enemySecondsToCapture = 3f;
     [SerializeField] private readonly float secondsToDrain = 2f;
 
+    private NavMeshSurface runtimeNavMeshSurface;
+
     public List<Zone> zones = new List<Zone>();
+
+    // Per-side capture meter on neutral / enemy / contested tiles. Progress is 0..1 until the tile flips.
+    private class CaptureState
+    {
+        public Zone activeZone;
+        public float progress;
+    }
+
+    private CaptureState playerCaptureState = new CaptureState();
+    private CaptureState enemyCaptureState = new CaptureState();
+
+    private Zone activeContestedZone;
+
+    // When overlap ends, revert contested visuals to whoever owned the tile before Contested.
+    private ZoneOwner activeContestedPreviousOwner = ZoneOwner.Neutral;
+
+    public Transform MainCameraTransform => mainCameraTransform;
 
     public int Rows => rows;
     public int Columns => columns;
     public float PlayerSecondsToCapture => playerSecondsToCapture;
     public float EnemySecondsToCapture => enemySecondsToCapture;
 
-    public void SetRows(int value) =>
-        rows = Mathf.Clamp(value, MinGridSize, MaxGridSize);
-
-    public void SetColumns(int value) =>
-        columns = Mathf.Clamp(value, MinGridSize, MaxGridSize);
+    public void SetRows(int value) => rows = Mathf.Clamp(value, MinGridSize, MaxGridSize);
+    public void SetColumns(int value) => columns = Mathf.Clamp(value, MinGridSize, MaxGridSize);
 
     public void SetPlayerSecondsToCapture(float value) =>
         playerSecondsToCapture = Mathf.Max(MinCaptureSeconds, value);
@@ -117,51 +136,12 @@ public class ZoneManager : MonoBehaviour
     private void OnGameResetRequested()
     {
         ClearAllZones();
-        if (runtimeNavMeshSurface != null)
-        {
-            runtimeNavMeshSurface.RemoveData();
-        }
+        runtimeNavMeshSurface?.RemoveData();
     }
 
-    // Capture state for each owner
-    // activeZone: current zone this owner is trying to capture.
-    // progress: capture progress in range [0..secondsToCapture].
-    private class CaptureState
-    {
-        public Zone activeZone;
-        public float progress;
-    }
+    public static bool CanEnemyCapture(Zone zone) =>
+        zone != null && (zone.Owner == ZoneOwner.Neutral || zone.Owner == ZoneOwner.Player);
 
-    private CaptureState playerCaptureState = new CaptureState();
-    private CaptureState enemyCaptureState = new CaptureState();
-
-    private Zone activeContestedZone;
-
-    // The previous owner of the contested zone, so it can return to previous owner when contested zone is lost.
-    private ZoneOwner activeContestedPreviousOwner = ZoneOwner.Neutral;
-
-    // The owner of a zone. Neutral by default
-    public enum ZoneOwner
-    {
-        Neutral,
-        Contested,
-        Player,
-        Enemy
-    }
-
-    // Returns true when this zone is neutral or player-held so the enemy may contest it; false if zone is null.
-    public static bool CanEnemyCapture(Zone zone)
-    {
-        if (zone == null)
-        {
-            return false;
-        }
-
-        return zone.Owner == ZoneOwner.Neutral || zone.Owner == ZoneOwner.Player;
-    }
-
-    // Destroys previously spawned zones. 
-    //Can be used to reset the zone manager to a new game.
     private void ClearAllZones()
     {
         foreach (Zone zone in zones)
@@ -170,19 +150,12 @@ public class ZoneManager : MonoBehaviour
         }
 
         zones.Clear();
-
-        playerCaptureState.activeZone = null;
-        playerCaptureState.progress = 0f;
-        enemyCaptureState.activeZone = null;
-        enemyCaptureState.progress = 0f;
-        activeContestedZone = null;
-        activeContestedPreviousOwner = ZoneOwner.Neutral;
+        ResetBothCaptureStates();
+        ResetContestedOverlapTracking();
     }
 
-    // Builds zones from the confirmed floor plane.
     private void GenerateZones(Transform planeTransform, Vector2 planeSize)
     {
-        //Clear all zones and reset capture states and contested zone.
         ClearAllZones();
 
         for (int rowIndex = 0; rowIndex < rows; rowIndex++)
@@ -195,7 +168,6 @@ public class ZoneManager : MonoBehaviour
         }
     }
 
-    // Material lookup for floor by zone owner.
     public Material GetFloorMaterial(ZoneOwner owner)
     {
         switch (owner)
@@ -207,7 +179,6 @@ public class ZoneManager : MonoBehaviour
         }
     }
 
-    // Flag prefab lookup by zone owner.
     public GameObject GetFlagPrefab(ZoneOwner owner)
     {
         switch (owner)
@@ -219,16 +190,11 @@ public class ZoneManager : MonoBehaviour
         }
     }
 
-    // Builds navmesh from generated runtime geometry.
     private void BuildRuntimeNavMesh()
     {
         if (runtimeNavMeshSurface == null)
         {
-            runtimeNavMeshSurface = GetComponent<NavMeshSurface>();
-            if (runtimeNavMeshSurface == null)
-            {
-                runtimeNavMeshSurface = gameObject.AddComponent<NavMeshSurface>();
-            }
+            runtimeNavMeshSurface = GetComponent<NavMeshSurface>() ?? gameObject.AddComponent<NavMeshSurface>();
         }
 
         runtimeNavMeshSurface.collectObjects = CollectObjects.Children;
@@ -236,35 +202,30 @@ public class ZoneManager : MonoBehaviour
         runtimeNavMeshSurface.BuildNavMesh();
     }
 
-    // Returns nearest zone that the enemy should try to capture next.
-
     public Zone GetNearestEnemyTargetZone(Vector3 fromPosition)
     {
-        Zone nearestZone = null;
-
-        float nearestDistance = float.MaxValue;
-
+        Zone nearest = null;
+        float bestSqr = float.MaxValue;
         foreach (Zone zone in zones)
         {
             if (!CanEnemyCapture(zone))
             {
-                continue; //If the zone is not captureable, continue to the next zone.
+                continue;
             }
 
-            float distance = Vector3.Distance(zone.transform.position, fromPosition);
-            if (distance >= nearestDistance)
+            float sqr = (zone.transform.position - fromPosition).sqrMagnitude;
+            if (sqr >= bestSqr)
             {
-                continue; //If the distance is not the nearest, continue to the next zone.
+                continue;
             }
 
-            nearestDistance = distance;
-            nearestZone = zone;
+            bestSqr = sqr;
+            nearest = zone;
         }
 
-        return nearestZone;
+        return nearest;
     }
 
-    // Returns the first zone containing this world position, if any.
     public Zone GetZoneAtWorldPosition(Vector3 position)
     {
         foreach (Zone zone in zones)
@@ -275,54 +236,30 @@ public class ZoneManager : MonoBehaviour
         return null;
     }
 
+    /// <summary>
+    /// True when <paramref name="position"/> lies in a cell whose owner is <see cref="ZoneOwner.Contested"/> (active fight tile per <c>UpdateContestedVisualState</c>).
+    /// </summary>
+    public bool IsContestedZoneAtWorldPosition(Vector3 position)
+    {
+        Zone zone = GetZoneAtWorldPosition(position);
+        return zone != null && zone.Owner == ZoneOwner.Contested;
+    }
+
     private static bool IsPlayerDead()
     {
         return HealthSystem.Instance != null && HealthSystem.Instance.IsGhost;
     }
 
-    // Updates zone capture and drain progress each frame.
+    // Resolve cells under player/enemy → contested overlap / instant win → otherwise run capture + drain.
     private void Update()
     {
-        // Clamp durations so capture math never divides by zero.
         float playerCaptureRate = Mathf.Max(playerSecondsToCapture, MinCaptureSeconds);
         float enemyCaptureRate = Mathf.Max(enemySecondsToCapture, MinCaptureSeconds);
         float drainRate = Mathf.Max(secondsToDrain, MinCaptureSeconds);
 
-        // Resolve the player's current zone from the assigned AR Main Camera transform.
-        Zone playerZone;
-        if (mainCameraTransform != null)
-        {
-            playerZone = GetZoneAtWorldPosition(mainCameraTransform.position);
-        }
-        else
-        {
-            playerZone = null;
-        }
-
-        // Resolve the enemy's current zone from the object tagged Enemy.
-        GameObject enemy = GameObject.FindGameObjectWithTag("Enemy");
-        Zone enemyZone;
-        if (enemy != null)
-        {
-            enemyZone = GetZoneAtWorldPosition(enemy.transform.position);
-        }
-        else
-        {
-            enemyZone = null;
-        }
-
-        Zone sharedZone;
-        if (!IsPlayerDead()
-            && playerZone != null
-            && enemyZone != null
-            && playerZone == enemyZone)
-        {
-            sharedZone = playerZone;
-        }
-        else
-        {
-            sharedZone = null;
-        }
+        Zone playerZone = GetZoneUnderMainCamera();
+        Zone enemyZone = GetZoneUnderEnemy();
+        Zone sharedZone = GetSharedCellIfBothStandInSame(playerZone, enemyZone);
 
         if (TryResolveInstantContestedCapture(sharedZone))
         {
@@ -331,36 +268,52 @@ public class ZoneManager : MonoBehaviour
 
         UpdateContestedVisualState(sharedZone);
 
-        // If both are in the same zone, that zone is contested and capture is paused.
+        // Same cell while alive: contested visuals only; individual capture meters stay paused until they split.
         if (sharedZone != null)
         {
             return;
         }
 
         Zone playerZoneForCapture = IsPlayerDead() ? null : playerZone;
-
-        UpdateCaptureForOwner(
-            ZoneOwner.Player,
-            playerZoneForCapture,
-            playerCaptureRate,
-            drainRate);
-
-
-        UpdateCaptureForOwner(
-            ZoneOwner.Enemy,
-            enemyZone,
-            enemyCaptureRate,
-            drainRate);
+        UpdateCaptureForOwner(ZoneOwner.Player, playerZoneForCapture, playerCaptureRate, drainRate);
+        UpdateCaptureForOwner(ZoneOwner.Enemy, enemyZone, enemyCaptureRate, drainRate);
     }
 
-    private bool TryResolveInstantContestedCapture(Zone sharedZone)
+    private Zone GetZoneUnderMainCamera()
     {
-        if (sharedZone == null)
+        if (mainCameraTransform == null)
         {
-            return false;
+            return null;
         }
 
-        if (IsPlayerDead())
+        return GetZoneAtWorldPosition(mainCameraTransform.position);
+    }
+
+    private Zone GetZoneUnderEnemy()
+    {
+        GameObject enemy = GameObject.FindGameObjectWithTag("Enemy");
+        if (enemy == null)
+        {
+            return null;
+        }
+
+        return GetZoneAtWorldPosition(enemy.transform.position);
+    }
+
+    private Zone GetSharedCellIfBothStandInSame(Zone playerZone, Zone enemyZone)
+    {
+        if (IsPlayerDead() || playerZone == null || enemyZone == null || playerZone != enemyZone)
+        {
+            return null;
+        }
+
+        return playerZone;
+    }
+
+    // Instant-capture pickup wins the standoff: grant the tile to the player and clear overlap bookkeeping.
+    private bool TryResolveInstantContestedCapture(Zone sharedZone)
+    {
+        if (sharedZone == null || IsPlayerDead())
         {
             return false;
         }
@@ -379,122 +332,104 @@ public class ZoneManager : MonoBehaviour
         }
 
         sharedZone.ApplyOwnerColor();
-
-        activeContestedZone = null;
-        activeContestedPreviousOwner = ZoneOwner.Neutral;
-
-        if (playerCaptureState.activeZone == sharedZone)
-        {
-            playerCaptureState.activeZone = null;
-        }
-
-        if (enemyCaptureState.activeZone == sharedZone)
-        {
-            enemyCaptureState.activeZone = null;
-        }
-
-        playerCaptureState.progress = 0f;
-        enemyCaptureState.progress = 0f;
+        ResetContestedOverlapTracking();
+        ClearCaptureStatesTargeting(sharedZone);
+        ZeroBothCaptureProgress();
         return true;
     }
 
-    // Contested visuals are temporary and only active while both actors share the same zone.
-    // When overlap ends, the zone is restored to its previous owner.
     private void UpdateContestedVisualState(Zone sharedZone)
     {
-        // If the active contested zone is not the shared zone, reset the contested zone.
-        if (activeContestedZone != null && activeContestedZone != sharedZone)
-        {
-            if (activeContestedZone.Owner == ZoneOwner.Contested)
-            {
-                SetZoneOwner(activeContestedZone, activeContestedPreviousOwner);
-            }
+        EndStaleContestedVisual(sharedZone);
 
-            activeContestedZone = null;
-            activeContestedPreviousOwner = ZoneOwner.Neutral;
+        if (sharedZone == null)
+        {
+            return;
         }
 
-        // If there is no shared zone, return.
-        if (sharedZone == null) return;
-
-        // Set the contested zone to the shared zone.
         if (activeContestedZone != sharedZone)
         {
             activeContestedPreviousOwner = sharedZone.Owner;
             activeContestedZone = sharedZone;
         }
 
-        // Set the zone to contested if it is not already contested.
         if (sharedZone.Owner != ZoneOwner.Contested)
         {
             SetZoneOwner(sharedZone, ZoneOwner.Contested);
         }
     }
 
-    // Shared capture flow for a given owner using a switch on zone ownership.
-    private void UpdateCaptureForOwner(ZoneOwner capturerOwner, Zone zoneUnder, float captureRate, float drainRate)
+    private void EndStaleContestedVisual(Zone sharedZone)
     {
-        CaptureState ownerState = GetCaptureState(capturerOwner);
-
-        if (zoneUnder == null)
+        if (activeContestedZone == null || activeContestedZone == sharedZone)
         {
-            if (ownerState.activeZone != null)
-            {
-                ownerState.progress = Mathf.Max(0f, ownerState.progress - (Time.deltaTime / drainRate));
-                ownerState.activeZone.ApplyCapturePreview(capturerOwner, ownerState.progress);
-            }
-
-            if (ownerState.progress == 0f)
-            {
-                if (ownerState.activeZone != null)
-                {
-                    ownerState.activeZone.ApplyOwnerColor();
-                }
-
-                ownerState.activeZone = null;
-            }
-
             return;
         }
 
-        switch (zoneUnder.Owner)
+        if (activeContestedZone.Owner == ZoneOwner.Contested)
         {
-            case ZoneOwner.Player:
-                if (capturerOwner == ZoneOwner.Player)
-                {
-                    if (ownerState.activeZone != null)
-                    {
-                        ownerState.activeZone.ApplyOwnerColor();
-                    }
-
-                    ownerState.activeZone = null;
-                    ownerState.progress = 0f;
-                    return;
-                }
-
-                break;
-            case ZoneOwner.Enemy:
-                if (capturerOwner == ZoneOwner.Enemy)
-                {
-                    if (ownerState.activeZone != null)
-                    {
-                        ownerState.activeZone.ApplyOwnerColor();
-                    }
-
-                    ownerState.activeZone = null;
-                    ownerState.progress = 0f;
-                    return;
-                }
-
-                break;
-            case ZoneOwner.Neutral:
-                break;
-            case ZoneOwner.Contested:
-                break;
-            default:
-                return;
+            SetZoneOwner(activeContestedZone, activeContestedPreviousOwner);
         }
 
+        ResetContestedOverlapTracking();
+    }
+
+    private void ResetBothCaptureStates()
+    {
+        playerCaptureState.activeZone = null;
+        playerCaptureState.progress = 0f;
+        enemyCaptureState.activeZone = null;
+        enemyCaptureState.progress = 0f;
+    }
+
+    private void ZeroBothCaptureProgress()
+    {
+        playerCaptureState.progress = 0f;
+        enemyCaptureState.progress = 0f;
+    }
+
+    private void ResetContestedOverlapTracking()
+    {
+        activeContestedZone = null;
+        activeContestedPreviousOwner = ZoneOwner.Neutral;
+    }
+
+    private void ClearCaptureStatesTargeting(Zone target)
+    {
+        if (playerCaptureState.activeZone == target)
+        {
+            playerCaptureState.activeZone = null;
+        }
+
+        if (enemyCaptureState.activeZone == target)
+        {
+            enemyCaptureState.activeZone = null;
+        }
+    }
+
+    // Advances or drains one side's capture meter for the zone they are standing in (or drains when not in a zone).
+    // `captureRate` / `drainRate` are full-bar times in seconds (already clamped in Update).
+    private void UpdateCaptureForOwner(ZoneOwner capturerOwner, Zone zoneUnder, float captureRate, float drainRate)
+    {
+        CaptureState ownerState = GetCaptureState(capturerOwner);
+        float captureDeltaTime = GetCaptureDeltaTimeForOwner(capturerOwner);
+
+        // Not standing in any cell: decay in-progress capture on the last targeted zone, then clear when empty.
+        if (zoneUnder == null)
+        {
+            DrainCaptureProgressWhileOutsideZone(ownerState, capturerOwner, captureDeltaTime, drainRate);
+            return;
+        }
+
+        // Standing on a tile we already fully own (Player on Player, Enemy on Enemy). Drop any stray preview progress.
+        // Neutral / Contested / opponent-owned tiles fall through so capture can continue or start.
+        if (zoneUnder.Owner == capturerOwner)
+        {
+            ResetCaptureStateOnZone(ownerState, capturerOwner);
+            return;
+        }
+
+        // Switched to a different capture target: restore the old tile visuals and restart progress from 0.
         if (ownerState.activeZone != zoneUnder)
         {
             if (ownerState.activeZone != null)
@@ -506,6 +441,7 @@ public class ZoneManager : MonoBehaviour
             ownerState.progress = 0f;
         }
 
+        // Fill the meter (instant buff snaps to full; otherwise linear over captureRate seconds).
         bool instantCaptureBuffActive =
             capturerOwner == ZoneOwner.Player
             && PickupEffects.Instance != null
@@ -517,15 +453,71 @@ public class ZoneManager : MonoBehaviour
         }
         else
         {
-            ownerState.progress += Time.deltaTime / captureRate;
+            ownerState.progress += captureDeltaTime / captureRate;
         }
 
         zoneUnder.ApplyCapturePreview(capturerOwner, ownerState.progress);
+
+        // Still filling — ownership change happens only when progress reaches 1.
         if (ownerState.progress < 1f)
         {
             return;
         }
 
+        CompleteZoneCapture(capturerOwner, zoneUnder, ownerState);
+    }
+
+    private static float GetCaptureDeltaTimeForOwner(ZoneOwner capturerOwner)
+    {
+        float captureDeltaTime = Time.deltaTime;
+        if (capturerOwner == ZoneOwner.Enemy && PickupEffects.Instance != null)
+        {
+            captureDeltaTime *= PickupEffects.Instance.EnemySimulationTimeScale;
+        }
+
+        return captureDeltaTime;
+    }
+
+    // While the capturer is not in a zone, drain progress on the active target at `drainRate` until it hits zero.
+    private static void DrainCaptureProgressWhileOutsideZone(
+        CaptureState ownerState,
+        ZoneOwner capturerOwner,
+        float captureDeltaTime,
+        float drainRate)
+    {
+        if (ownerState.activeZone != null)
+        {
+            ownerState.progress = Mathf.Max(0f, ownerState.progress - (captureDeltaTime / drainRate));
+            ownerState.activeZone.ApplyCapturePreview(capturerOwner, ownerState.progress);
+        }
+
+        if (ownerState.progress != 0f)
+        {
+            return;
+        }
+
+        if (ownerState.activeZone != null)
+        {
+            ownerState.activeZone.ApplyOwnerColor();
+        }
+
+        ownerState.activeZone = null;
+    }
+
+    // Clears in-progress capture UI/state when the capturer idles on their own color.
+    private static void ResetCaptureStateOnZone(CaptureState ownerState, ZoneOwner capturerOwner)
+    {
+        if (ownerState.activeZone != null)
+        {
+            ownerState.activeZone.ApplyOwnerColor();
+        }
+
+        ownerState.activeZone = null;
+        ownerState.progress = 0f;
+    }
+
+    private void CompleteZoneCapture(ZoneOwner capturerOwner, Zone zoneUnder, CaptureState ownerState)
+    {
         SetZoneOwner(zoneUnder, capturerOwner);
         if (capturerOwner == ZoneOwner.Player)
         {
@@ -543,16 +535,8 @@ public class ZoneManager : MonoBehaviour
         ownerState.progress = 0f;
     }
 
-    // Returns the capture state for a given owner.
-    private CaptureState GetCaptureState(ZoneOwner owner)
-    {
-        if (owner == ZoneOwner.Enemy)
-        {
-            return enemyCaptureState;
-        }
-
-        return playerCaptureState;
-    }
+    private CaptureState GetCaptureState(ZoneOwner owner) =>
+        owner == ZoneOwner.Enemy ? enemyCaptureState : playerCaptureState;
 
     private static void PlayZoneCaptureSfx(bool isPlayerCapture)
     {
@@ -568,18 +552,12 @@ public class ZoneManager : MonoBehaviour
             return;
         }
 
-        SoundManager.Instance.PlaySfx(clip);
+        SoundManager.Instance.PlayOneShot(clip);
     }
 
     private void SetZoneOwner(Zone zone, ZoneOwner newOwner)
     {
-        if (zone == null)
-        {
-            return;
-        }
-
-        ZoneOwner previousOwner = zone.Owner;
-        if (previousOwner == newOwner)
+        if (zone == null || zone.Owner == newOwner)
         {
             return;
         }
@@ -646,29 +624,17 @@ public class ZoneManager : MonoBehaviour
             activeContestedPreviousOwner = ZoneOwner.Player;
         }
 
-        // Clear any in-progress captures so stale progress doesn't carry over onto flipped zones.
-        playerCaptureState.activeZone = null;
-        playerCaptureState.progress = 0f;
-        enemyCaptureState.activeZone = null;
-        enemyCaptureState.progress = 0f;
+        ResetBothCaptureStates();
     }
 
-    // Returns a random zone from all available zones.
     public Zone GetRandomZone()
     {
-        if (zones.Count == 0)
-        {
-            return null;
-        }
-
-        int randomIndex = Random.Range(0, zones.Count);
-        return zones[randomIndex];
+        return zones.Count == 0 ? null : zones[Random.Range(0, zones.Count)];
     }
 
     public Zone GetRandomNeutralFirstZone()
     {
         List<Zone> neutralZones = new List<Zone>();
-
         foreach (Zone zone in zones)
         {
             if (zone.Owner == ZoneOwner.Neutral)
@@ -677,47 +643,29 @@ public class ZoneManager : MonoBehaviour
             }
         }
 
-        if (neutralZones.Count > 0)
-        {
-            int neutralRandomIndex = Random.Range(0, neutralZones.Count);
-            return neutralZones[neutralRandomIndex];
-        }
-
-        return GetRandomZone();
+        return neutralZones.Count > 0 ? neutralZones[Random.Range(0, neutralZones.Count)] : GetRandomZone();
     }
 
-    // Creates one zone GameObject and initializes its Zone component.
     private Zone CreateZone(Transform planeTransform, Vector2 planeSize, int rowIndex, int colIndex)
     {
         float cellWidth = planeSize.x / columns;
         float cellHeight = planeSize.y / rows;
 
-        //Anchor the zone to the bottom left of the plane.
+        // Bottom-left anchored grid in plane local space → world center and AABB size for Contains().
         float anchorX = -planeSize.x * 0.5f;
         float anchorZ = -planeSize.y * 0.5f;
-
-        // Calculate the local center of the cell.
         float localX = anchorX + (colIndex + 0.5f) * cellWidth;
         float localZ = anchorZ + (rowIndex + 0.5f) * cellHeight;
-
-        // Convert the local center to world position.
-        Vector3 localCenter = new Vector3(localX, 0f, localZ);
-        Vector3 worldCenter = planeTransform.TransformPoint(localCenter);
-
-        //Convert local cell size to world cell size.
-        // The planeTransform.lossyScale is the scale of the plane.
+        Vector3 worldCenter = planeTransform.TransformPoint(new Vector3(localX, 0f, localZ));
         float worldCellSizeX = cellWidth * planeTransform.lossyScale.x;
         float worldCellSizeZ = cellHeight * planeTransform.lossyScale.z;
 
-        //Create the zone object.
-        // With name reflecting the row and column index.
         GameObject zoneObject = new GameObject("Zone_" + rowIndex + "_" + colIndex);
         zoneObject.transform.SetParent(transform);
         zoneObject.transform.position = worldCenter;
         zoneObject.transform.rotation = planeTransform.rotation;
 
         Zone zone = zoneObject.AddComponent<Zone>();
-        // Initialize the zone with the world cell size and the zone manager.
         zone.Setup(worldCellSizeX, worldCellSizeZ, this);
         return zone;
     }

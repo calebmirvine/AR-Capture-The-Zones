@@ -15,6 +15,11 @@ public class EnemyAttackState : EnemyStateMachineBehaviour
 
     public override void OnStateUpdate(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
+        if (BlockStateWhenGrenadeStunned(animator))
+        {
+            return;
+        }
+
         if (HealthSystem.Instance != null && HealthSystem.Instance.IsGhost)
         {
             animator.SetBool(IsAttackingParam, false);

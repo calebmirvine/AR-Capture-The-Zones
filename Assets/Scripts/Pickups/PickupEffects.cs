@@ -10,7 +10,7 @@ public enum PickupKind
     SwapZones,
 }
 
-// Run after default gameplay scripts so we re-apply slow after anything that might reset NavMeshAgent speeds.
+// Reapply time-slow after gameplay/NavMesh so agent settings are not overwritten
 [DefaultExecutionOrder(10000)]
 public class PickupEffects : MonoBehaviour
 {
@@ -24,7 +24,6 @@ public class PickupEffects : MonoBehaviour
     private float timeSlowHudExpireAt;
     private Coroutine enemySlowCoroutine;
 
-    // Cached enemy state so we can restore it cleanly.
     private NavMeshAgent slowedAgent;
     private Animator slowedAnimator;
     private float originalAgentSpeed;
@@ -49,10 +48,9 @@ public class PickupEffects : MonoBehaviour
         get { return hasPending; }
     }
 
-    /// <summary>
-    /// When true, world pickups should not be collected: either a pickup is held for HUD activation,
-    /// or a timed buff from a consumed pickup is still running.
-    /// </summary>
+
+/// When true, world pickups should not be collected: either a pickup is held for HUD activation,
+    // or a timed buff from a consumed pickup is still running.
     public bool IsPickupSlotOccupied
     {
         get
@@ -78,6 +76,14 @@ public class PickupEffects : MonoBehaviour
         get { return enemySlowCoroutine != null; }
     }
 
+
+    // Matches the clock pickup scale (e.g. 0.3) while time slow runs; 1 otherwise.
+    // Use for enemy-only simulation (zone capture progress, etc.).
+    public float EnemySimulationTimeScale
+    {
+        get { return enemySlowCoroutine != null ? activeTimeSlowScale : 1f; }
+    }
+
     public bool IsZoneSwapHudActive
     {
         get { return Time.time < zoneSwapHudExpireAt; }
@@ -93,7 +99,7 @@ public class PickupEffects : MonoBehaviour
         get { return Time.time < timeSlowHudExpireAt; }
     }
 
-    // Ensure there is only one instance of the PickupEffects class in the scene.
+    // Singleton. Ensure there is only one instance of the PickupEffects class in the scene.
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -112,7 +118,6 @@ public class PickupEffects : MonoBehaviour
             return;
         }
 
-        // NavMesh/AI can reset agent settings after we assign them; keep the debuff applied every frame.
         if (slowedAgent != null)
         {
             slowedAgent.speed = originalAgentSpeed * activeTimeSlowScale;
@@ -215,7 +220,7 @@ public class PickupEffects : MonoBehaviour
             AudioClip clip = library.GetPickupActivationSfx(kind);
             if (clip != null && SoundManager.Instance != null)
             {
-                SoundManager.Instance.PlaySfx(clip);
+                SoundManager.Instance.PlayOneShot(clip);
             }
         }
 
@@ -270,6 +275,11 @@ public class PickupEffects : MonoBehaviour
     /// <returns>False if no enemy exists yet (pending power-up is not cleared so the player can try again).</returns>
     public bool ActivateTimeSlow(float seconds, float scale)
     {
+        if (seconds <= 0f)
+        {
+            return false;
+        }
+
         StopEnemySlow();
 
         Enemy enemy = FindEnemy();
@@ -281,10 +291,9 @@ public class PickupEffects : MonoBehaviour
 
         timeSlowHudExpireAt = Time.time + seconds + ActivePickupHudLingerSeconds;
 
-        slowedAgent = ResolveNavMeshAgent(enemy);
-        slowedAnimator = ResolveAnimator(enemy);
-        float clampedScale = Mathf.Clamp(scale, 0.05f, 1f);
-        activeTimeSlowScale = clampedScale;
+        slowedAgent = enemy.Agent;
+        slowedAnimator = enemy.Animator;
+        activeTimeSlowScale = Mathf.Clamp(scale, 0.05f, 1f);
 
         if (slowedAgent != null)
         {
@@ -335,66 +344,6 @@ public class PickupEffects : MonoBehaviour
         slowedAgent = null;
         slowedAnimator = null;
         activeTimeSlowScale = 1f;
-    }
-
-    private static Animator ResolveAnimator(Enemy enemy)
-    {
-        if (enemy == null)
-        {
-            return null;
-        }
-
-        // Prefer self/parents (skip Animators with no controller — do not use layerCount; it throws).
-        for (Transform t = enemy.transform; t != null; t = t.parent)
-        {
-            Animator a = t.GetComponent<Animator>();
-            if (IsUsableCharacterAnimator(a))
-            {
-                return a;
-            }
-        }
-
-        // Fall back: animator on a child mesh (e.g. Y Bot under the Enemy root).
-        Animator[] children = enemy.GetComponentsInChildren<Animator>(true);
-        for (int i = 0; i < children.Length; i++)
-        {
-            Animator a = children[i];
-            if (IsUsableCharacterAnimator(a))
-            {
-                return a;
-            }
-        }
-
-        return null;
-    }
-
-    private static bool IsUsableCharacterAnimator(Animator animator)
-    {
-        return animator != null
-            && animator.enabled
-            && animator.runtimeAnimatorController != null;
-    }
-
-    private static NavMeshAgent ResolveNavMeshAgent(Enemy enemy)
-    {
-        if (enemy == null)
-        {
-            return null;
-        }
-
-        NavMeshAgent agent = enemy.Agent;
-        if (agent != null)
-        {
-            return agent;
-        }
-
-        agent = enemy.GetComponent<NavMeshAgent>();
-        if (agent != null)
-        {
-            return agent;
-        }
-
-        return enemy.GetComponentInChildren<NavMeshAgent>(true);
     }
 
     private static Enemy FindEnemy()

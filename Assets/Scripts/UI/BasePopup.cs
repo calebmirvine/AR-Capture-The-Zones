@@ -26,7 +26,7 @@ public class BasePopup : MonoBehaviour
 
     protected void PlayNavigationSfx()
     {
-        SoundManager.Instance.PlaySfx(SoundLibrary.Instance.MenuNavSfx);
+        SoundManager.Instance.PlayOneShot(SoundLibrary.Instance.MenuNavSfx);
     }
 
     public void OnReturnToGameButton()

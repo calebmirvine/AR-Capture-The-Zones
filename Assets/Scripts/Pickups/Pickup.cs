@@ -66,7 +66,7 @@ public abstract class Pickup : MonoBehaviour
             AudioClip clip = library.DefaultPickupSfx;
             if (clip != null)
             {
-                SoundManager.Instance.PlaySfx(clip);
+                SoundManager.Instance.PlayOneShot(clip);
             }
         }
 

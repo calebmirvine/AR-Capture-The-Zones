@@ -1,24 +1,43 @@
 using UnityEngine;
 
-// """
-// Create an EnemyAnimEvents.cs script for detecting animation events. This allows us to
-// turn the foot collider on and off. It needs to be attached to the object with the Animator
-// component, so attach it to the Enemy’s active model (YBot). In the script, add a private
-// Collider footCollider, serialize it, and then drag the Enemy’s RightFoot object into the
-// Collider field (in the Inspector). Write a public EnableFootDamageEvent() which sets
-// footCollider.enabled = true. Write a matching DisableFootDamageEvent() method to
-// disable the collider.
-// """
 public class EnemyAnimEvents : MonoBehaviour
 {
-    [SerializeField] private Collider footCollider;   // reference to the foot collider
+    [SerializeField] private Collider footCollider;
 
-    public void EnableFootDamageEvent() {
-        // Debug.Log("Enabling foot damage event!");   // log message for debugging
-        footCollider.enabled = true;   // enable the foot collider
+    private EnemyFootDamage footDamage;
+
+    private void Awake()
+    {
+        if (footCollider != null)
+        {
+            footDamage = footCollider.GetComponent<EnemyFootDamage>();
+        }
     }
-    public void DisableFootDamageEvent() {
-        // Debug.Log("Disable foot damage event!");   // log message for debugging
-        footCollider.enabled = false;  // disable the foot collider
+
+    public void EnableFootDamageEvent()
+    {
+        if (footCollider == null)
+        {
+            return;
+        }
+
+        // New kick window only when the hitbox was off. If Enable runs twice while the collider stays on, we do not open a second damage window.
+        bool footHitboxWasOff = !footCollider.enabled;
+        if (footHitboxWasOff)
+        {
+            footDamage?.BeginKickDamageWindow();
+        }
+
+        footCollider.enabled = true;
+    }
+
+    public void DisableFootDamageEvent()
+    {
+        if (footCollider == null)
+        {
+            return;
+        }
+
+        footCollider.enabled = false;
     }
 }

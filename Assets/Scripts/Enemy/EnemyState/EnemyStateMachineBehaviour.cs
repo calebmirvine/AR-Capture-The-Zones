@@ -13,11 +13,29 @@ public class EnemyStateMachineBehaviour : StateMachineBehaviour
     protected const string DanceIdxParam = "DanceIndex";
     protected const string SpeedParam = "Speed";
     protected const string IsAttackingParam = "IsAttacking";
+    protected const string IsStunnedParam = "IsStunned";
 
     public override void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
         enemy = animator.GetComponentInParent<Enemy>();
         agent = enemy != null ? enemy.Agent : null;
+        if (enemy != null)
+        {
+            enemy.SetStateMachineHostAnimator(animator);
+        }
+    }
+
+    /// <summary>Kinematic grenade stun runs on <see cref="Enemy"/> timing; block other SMB logic until the animator transitions to Stunned.</summary>
+    protected bool BlockStateWhenGrenadeStunned(Animator animator)
+    {
+        if (enemy != null && enemy.IsGrenadeStunActive)
+        {
+            enemy.StopMovement();
+            animator.SetFloat(SpeedParam, 0f);
+            return true;
+        }
+
+        return false;
     }
 
     // Clears chaseRequested when out of aggro so Chase can trigger again later.

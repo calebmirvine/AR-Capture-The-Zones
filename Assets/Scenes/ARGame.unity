@@ -1336,7 +1336,6 @@ MonoBehaviour:
   setupMusicTracks:
   - {fileID: 8300000, guid: d9595ca8f1aa74c9399535cbe6395675, type: 3}
   - {fileID: 8300000, guid: 913fabd6d7cf4421a8dbd31918916a0e, type: 3}
-  - {fileID: 8300000, guid: 75235fbb2f4e149e3a5c4e16d9184123, type: 3}
   musicTracks:
   - {fileID: 8300000, guid: d89b11135a0d84081adc636214bca973, type: 3}
   - {fileID: 8300000, guid: 7e2a56c07c7fb4a468a27af2edaa86a7, type: 3}
@@ -3705,7 +3704,7 @@ MonoBehaviour:
   m_FillRect: {fileID: 985261249}
   m_HandleRect: {fileID: 2099762111}
   m_Direction: 0
-  m_MinValue: 0
+  m_MinValue: 30
   m_MaxValue: 300
   m_WholeNumbers: 1
   m_Value: 120
@@ -5460,7 +5459,7 @@ RectTransform:
   m_Father: {fileID: 1220615715}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0.4, y: 1}
+  m_AnchorMax: {x: 0.33333334, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 10, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -7908,7 +7907,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: '1
+  m_text: '
+
 
 '
   m_isRightToLeft: 0
@@ -7937,8 +7937,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 36
-  m_fontSizeBase: 36
+  m_fontSize: 0
+  m_fontSizeBase: 0
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -9478,7 +9478,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1276257570899219219, guid: 4d2b9ab926e2747d5b4bc572bd6157de, type: 3}
       propertyPath: m_Pivot.y
-      value: 1
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 1276257570899219219, guid: 4d2b9ab926e2747d5b4bc572bd6157de, type: 3}
       propertyPath: m_AnchorMax.x
@@ -9486,7 +9486,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1276257570899219219, guid: 4d2b9ab926e2747d5b4bc572bd6157de, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 1
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 1276257570899219219, guid: 4d2b9ab926e2747d5b4bc572bd6157de, type: 3}
       propertyPath: m_AnchorMin.x
@@ -9494,15 +9494,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1276257570899219219, guid: 4d2b9ab926e2747d5b4bc572bd6157de, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 1
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 1276257570899219219, guid: 4d2b9ab926e2747d5b4bc572bd6157de, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 1170
+      value: 1114.8301
       objectReference: {fileID: 0}
     - target: {fileID: 1276257570899219219, guid: 4d2b9ab926e2747d5b4bc572bd6157de, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 2532
+      value: 345.14
       objectReference: {fileID: 0}
     - target: {fileID: 1276257570899219219, guid: 4d2b9ab926e2747d5b4bc572bd6157de, type: 3}
       propertyPath: m_LocalPosition.x
@@ -9534,11 +9534,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1276257570899219219, guid: 4d2b9ab926e2747d5b4bc572bd6157de, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: -125
+      value: -75
       objectReference: {fileID: 0}
     - target: {fileID: 1276257570899219219, guid: 4d2b9ab926e2747d5b4bc572bd6157de, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -300
+      value: 330
       objectReference: {fileID: 0}
     - target: {fileID: 1276257570899219219, guid: 4d2b9ab926e2747d5b4bc572bd6157de, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -12418,8 +12418,8 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 188005722}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.4, y: 0}
-  m_AnchorMax: {x: 0.4, y: 1}
+  m_AnchorMin: {x: 0.33333334, y: 0}
+  m_AnchorMax: {x: 0.33333334, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 20, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -12989,7 +12989,7 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.5
+  m_Radius: 0.66
   m_Height: 3
   m_Direction: 1
   m_Center: {x: 0, y: -0.5, z: 0}

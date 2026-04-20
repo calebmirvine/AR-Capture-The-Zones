@@ -1,4 +1,3 @@
-using System;
 using System.Collections;
 using UnityEngine;
 
@@ -17,11 +16,8 @@ public class HealthSystem : MonoBehaviour
     private float invulnerableUntilTime;
 
     public int CurrentHealth => currentHealth;
-
     public int MaxHealth => maxHealth;
-
-    public float HealthNormalized => (float)currentHealth / maxHealth;
-    public event Action<float> OnHealthChanged;
+    public float HealthNormalized => (float)currentHealth / maxHealth; //normalized health value between 0 and 1
 
     public bool IsGhost => isGhost;
     public float GhostTimeRemaining => ghostTimeRemaining;
@@ -100,7 +96,7 @@ public class HealthSystem : MonoBehaviour
             AudioClip hurtSfx = library.PlayerHurtSfx;
             if (hurtSfx != null)
             {
-                SoundManager.Instance.PlaySfx(hurtSfx);
+                SoundManager.Instance.PlayOneShot(hurtSfx);
             }
         }
 
@@ -117,7 +113,7 @@ public class HealthSystem : MonoBehaviour
 
     private void NotifyHealthChanged()
     {
-        OnHealthChanged?.Invoke(HealthNormalized);
+        Messenger<float>.Broadcast(GameEvent.PLAYER_HEALTH_CHANGED, HealthNormalized, MessengerMode.DONT_REQUIRE_LISTENER);
     }
 
     private void EnterGhostMode()
@@ -133,7 +129,7 @@ public class HealthSystem : MonoBehaviour
             AudioClip deadSfx = library.PlayerDeadSfx;
             if (deadSfx != null)
             {
-                SoundManager.Instance.PlaySfx(deadSfx);
+                SoundManager.Instance.PlayOneShot(deadSfx);
             }
         }
 

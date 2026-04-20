@@ -21,4 +21,5 @@ public static class GameEvent {
     public const string GAME_RESULT_ENEMY_WIN = "GAME_RESULT_ENEMY_WIN";
     public const string GAME_RESULT_TIE = "GAME_RESULT_TIE";
     public const string GAME_RESET_REQUESTED = "GAME_RESET_REQUESTED";
+    public const string PLAYER_HEALTH_CHANGED = "PLAYER_HEALTH_CHANGED";
 }

@@ -19,6 +19,11 @@ public class EnemyCaptureState : EnemyStateMachineBehaviour
 
     public override void OnStateUpdate(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
+        if (BlockStateWhenGrenadeStunned(animator))
+        {
+            return;
+        }
+
         if (enemy != null && enemy.IsInCapturableZone())
         {
             enemy.StopMovement();

@@ -17,7 +17,7 @@ MonoBehaviour:
     m_MinimumRescanTime: 0.1
     m_DeltaCameraDistanceToRescan: 0.025
     m_DeltaCameraAngleToRescan: 4
-    m_RaysPerCast: 100
+    m_RaysPerCast: 50
     m_MaximumHitDistance: 12
     m_MinimumHitDistance: 0.05
   m_PlaneFindingParams:

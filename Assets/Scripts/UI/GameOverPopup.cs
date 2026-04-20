@@ -5,16 +5,17 @@ using UnityEngine;
 public class GameOverPopup : BasePopup
 {
     private const string PlayerWinText = "Player Wins!";
+    private static readonly Color32 PlayerWinColor = new Color32(0xF2, 0xC7, 0x53, 0xFF);
+
     private const string EnemyWinText = "Enemy Wins!";
+    private static readonly Color32 EnemyWinColor = new Color32(0xCD, 0x38, 0x4C, 0xFF);
+
     private const string TieText = "Game Tie!";
+    private static readonly Color32 TieColor = new Color32(0xFF, 0xFF, 0xFF, 0xFF);
 
     [SerializeField] private TMP_Text gameResultText;
     [SerializeField] private GameObject winningStars;
     [SerializeField] private GameObject losingStars;
-
-    private static readonly Color32 PlayerWinColor = new Color32(0xF2, 0xC7, 0x53, 0xFF);
-    private static readonly Color32 EnemyWinColor = new Color32(0xCD, 0x38, 0x4C, 0xFF);
-    private static readonly Color32 TieColor = new Color32(0xFF, 0xFF, 0xFF, 0xFF);
 
     private void OnEnable()
     {
@@ -32,22 +33,19 @@ public class GameOverPopup : BasePopup
         Messenger.RemoveListener(GameEvent.GAME_RESET_REQUESTED, OnGameResetRequested);
     }
 
-    public void OnPlayAgainButton()
-    {
-        PlayNavigationSfx();
-        SoundManager.Instance.StopMusic();
-
-        if (IsActive())
-        {
-            Close();
-        }
-
-        Messenger.Broadcast(GameEvent.GAME_RESET_REQUESTED, MessengerMode.DONT_REQUIRE_LISTENER);
-    }
-
     public void ShowPlayerWinResult()
     {
         ApplyResult(PlayerWinText, PlayerWinColor, true, false);
+
+        SoundLibrary library = SoundLibrary.Instance;
+        if (library != null)
+        {
+            AudioClip winSfx = library.VictorySfx;
+            if (winSfx != null)
+            {
+                SoundManager.Instance.PlayOneShot(winSfx);
+            }
+        }
     }
 
     public void ShowEnemyWinResult()
@@ -60,7 +58,7 @@ public class GameOverPopup : BasePopup
             AudioClip winSfx = library.EnemyWinSfx;
             if (winSfx != null)
             {
-                SoundManager.Instance.PlaySfx(winSfx);
+                SoundManager.Instance.PlayOneShot(winSfx);
             }
         }
     }
@@ -106,5 +104,18 @@ public class GameOverPopup : BasePopup
         {
             Open();
         }
+    }
+
+    public void OnPlayAgainButton()
+    {
+        PlayNavigationSfx();
+        SoundManager.Instance.StopMusic();
+
+        if (IsActive())
+        {
+            Close();
+        }
+
+        Messenger.Broadcast(GameEvent.GAME_RESET_REQUESTED, MessengerMode.DONT_REQUIRE_LISTENER);
     }
 }

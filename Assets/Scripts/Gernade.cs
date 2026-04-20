@@ -28,12 +28,13 @@ public class Gernade : MonoBehaviour
         {
             gameObject.tag = GrenadeTagName;
         }
-        catch (UnityException)
+        catch
         {
-            // Tag "Grenade" missing from Tag Manager — set on prefab instead.
+            // If the tag doesn't exist in the project, Unity throws; keep grenade functional anyway.
         }
     }
 
+    //
     private void OnTriggerEnter(Collider other)
     {
         TryMarkInsidePlayArea(other);
@@ -52,6 +53,7 @@ public class Gernade : MonoBehaviour
         }
     }
 
+    //checks if the grenade is inside the floor (x and z axes)
     private static bool IsInsideFloorXZ(Vector3 localPos, float halfX, float halfZ)
     {
         return Mathf.Abs(localPos.x) <= halfX && Mathf.Abs(localPos.z) <= halfZ;
@@ -69,14 +71,13 @@ public class Gernade : MonoBehaviour
             return;
         }
 
-        Transform plane = ZonePerimeter.ActivePlaneTransform;
-        Vector2 planeSize = ZonePerimeter.ActivePlaneSize;
-
-        Vector3 localPos = plane.InverseTransformPoint(rigidBody.position);
-        float halfX = planeSize.x * 0.5f;
+        Transform plane = ZonePerimeter.ActivePlaneTransform; //gets the active plane transform
+        Vector2 planeSize = ZonePerimeter.ActivePlaneSize; //gets the active plane size
+        Vector3 localPos = plane.InverseTransformPoint(rigidBody.position); //gets the local position of the grenade
+        float halfX = planeSize.x * 0.5f; 
         float halfZ = planeSize.y * 0.5f;
 
-        // Trigger volumes can miss (layers, tunneling). Also mark containment when over the floor rect.
+        //if the grenade is not inside the play area and is inside the floor, mark it as inside the play area
         if (!playAreaContainmentActive && IsInsideFloorXZ(localPos, halfX, halfZ))
         {
             playAreaContainmentActive = true;
@@ -87,6 +88,7 @@ public class Gernade : MonoBehaviour
             return;
         }
 
+        //if the grenade is outside the play area on the x or z axis, return and do not move the grenade
         bool outsideX = Mathf.Abs(localPos.x) > halfX;
         bool outsideZ = Mathf.Abs(localPos.z) > halfZ;
         if (!outsideX && !outsideZ)
@@ -127,6 +129,7 @@ public class Gernade : MonoBehaviour
         }
     }
 
+
     public void Explode()
     {
         SoundLibrary library = SoundLibrary.Instance;
@@ -135,12 +138,14 @@ public class Gernade : MonoBehaviour
             AudioClip explosionSfx = library.GrenadeExplosionSfx;
             if (explosionSfx != null)
             {
-                SoundManager.Instance.PlaySfx(explosionSfx);
+                SoundManager.Instance.PlayOneShot(explosionSfx);
             }
         }
 
         GameObject explosion = Instantiate(explosionPrefab, transform.position, transform.rotation);
 
+
+        // checks for enemies in the explosion radius and applies knockback
         Collider[] nearby = Physics.OverlapSphere(transform.position, explosionRadius);
         var enemiesProcessed = new HashSet<Enemy>();
         foreach (Collider hit in nearby)

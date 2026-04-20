@@ -5,13 +5,14 @@ using UnityEngine.UI;
 public class ConfigPopup : BasePopup
 {
     public const int DefaultGameTimeSeconds = 120;
+    public const int MinMatchDurationSeconds = 30;
+    public const int MaxMatchDurationSeconds = 300;
 
     private const string RowsLabelFormat = "Rows: {0}";
     private const string ColumnsLabelFormat = "Columns: {0}";
     private const string PlayerCaptureLabelFormat = "Player: {0}";
     private const string EnemyCaptureLabelFormat = "Enemy: {0}";
     private const string GameTimeLabelFormat = "Time: {0}:{1:00}";
-    private const string GameTimeUntimedLabel = "Time: (on all zones)";
 
     [SerializeField] private Slider rowsSlider;
     [SerializeField] private Slider columnsSlider;
@@ -61,7 +62,8 @@ public class ConfigPopup : BasePopup
 
     public void OnGameTimeSliderValueChanged(float value)
     {
-        int gameTimeSeconds = Mathf.RoundToInt(value);
+        int gameTimeSeconds = Mathf.RoundToInt(
+            Mathf.Clamp(value, MinMatchDurationSeconds, MaxMatchDurationSeconds));
         UpdateGameTimeLabel(gameTimeSeconds);
         uiManager.SetMatchDurationSeconds(gameTimeSeconds);
     }
@@ -72,13 +74,17 @@ public class ConfigPopup : BasePopup
         columnsSlider.SetValueWithoutNotify(zoneManager.Columns);
         playerCaptureSlider.SetValueWithoutNotify(zoneManager.PlayerSecondsToCapture);
         enemyCaptureSlider.SetValueWithoutNotify(zoneManager.EnemySecondsToCapture);
-        gameTimeSlider.SetValueWithoutNotify(uiManager.MatchDurationSeconds);
+        float clampedGameTime = Mathf.Clamp(
+            uiManager.MatchDurationSeconds,
+            MinMatchDurationSeconds,
+            MaxMatchDurationSeconds);
+        gameTimeSlider.SetValueWithoutNotify(clampedGameTime);
 
         UpdateRowsLabel(zoneManager.Rows);
         UpdateColumnsLabel(zoneManager.Columns);
         UpdatePlayerCaptureLabel(Mathf.RoundToInt(zoneManager.PlayerSecondsToCapture));
         UpdateEnemyCaptureLabel(Mathf.RoundToInt(zoneManager.EnemySecondsToCapture));
-        UpdateGameTimeLabel(Mathf.RoundToInt(uiManager.MatchDurationSeconds));
+        UpdateGameTimeLabel(Mathf.RoundToInt(clampedGameTime));
     }
 
     private void UpdateRowsLabel(int value)
@@ -103,13 +109,7 @@ public class ConfigPopup : BasePopup
 
     private void UpdateGameTimeLabel(int totalSeconds)
     {
-        int safeSeconds = Mathf.Max(0, totalSeconds);
-        if (safeSeconds == 0)
-        {
-            gameTimeText.text = GameTimeUntimedLabel;
-            return;
-        }
-
+        int safeSeconds = Mathf.Clamp(totalSeconds, MinMatchDurationSeconds, MaxMatchDurationSeconds);
         int minutes = safeSeconds / 60;
         int seconds = safeSeconds % 60;
         gameTimeText.text = string.Format(GameTimeLabelFormat, minutes, seconds);

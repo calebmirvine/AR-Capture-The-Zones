@@ -28,6 +28,11 @@ public class EnemyIdleState : EnemyStateMachineBehaviour
 
     public override void OnStateUpdate(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
+        if (BlockStateWhenGrenadeStunned(animator))
+        {
+            return;
+        }
+
         ResetChaseIfFar(enemy, ref chaseRequested);
 
         if (enemy.IsZoneContestedWithPlayer())

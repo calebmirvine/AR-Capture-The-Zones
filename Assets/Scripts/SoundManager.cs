@@ -141,9 +141,19 @@ public class SoundManager : MonoBehaviour
    
 
     
-     public void PlaySfx(AudioClip clip, float volume = 1f) 
+    public void PlayOneShot(AudioClip clip, float volume = 1f)
     {
+        if (clip == null || sfxSource == null)
+        {
+            return;
+        }
+
         sfxSource.PlayOneShot(clip, volume);
+    }
+
+    public void PlaySfx(AudioClip clip, float volume = 1f)
+    {
+        PlayOneShot(clip, volume);
     }
 
     public void PlayMusic(AudioClip clip, float volume = 1f)

@@ -1,44 +1,79 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.AI;
-using UnityEngine.Serialization;
 
+// NavMesh enemy for zone capture mode: picks capturable tiles, chases the player focus (AR camera),
+// and uses horizontal distance checks so XR camera offset still feels fair for chase and kick range.
 public class Enemy : MonoBehaviour
 {
-    private const string PlayerTag = "Player";
+    private const string IsStunnedAnimatorParam = "IsStunned";
 
-    /// <summary>Last enabled enemy in play mode (this project spawns one at a time). Used for time-slow and avoids fragile tag lookups.</summary>
+    // Last enabled instance wins; time-slow and similar systems grab Enemy.Active without a direct reference.
     public static Enemy Active { get; private set; }
-
-    [FormerlySerializedAs("navMeshAgent")]
+    
     [SerializeField] private NavMeshAgent agent;
     [SerializeField] private ZoneManager zoneManager;
 
+    [Header("Ranges")]
     [SerializeField] private float attackRange = 1f;
     [SerializeField] private float attackRangeStop = 2f;
     [SerializeField] private float chaseRange = 5f;
-    [Tooltip("Extra horizontal reach so attack bool does not flicker at the edge of range.")]
-    [SerializeField] private float attackEngagePadding = 0.3f;
+
+    [Header("Chase handoff")]
+    [SerializeField] private float chaseHandoffDelay = 0.28f;
 
     [Header("Grenade knockback")]
-    [Tooltip("NavMesh enemies use kinematic rigidbodies; scale maps grenade explosion force to horizontal shove (world units).")]
     [SerializeField] private float grenadeKnockbackDistancePerForce = 0.012f;
+    [SerializeField] private float grenadeStunDuration = 5f;
+    [SerializeField] private float grenadeKnockbackArcDuration = 0.45f;
+    [SerializeField] private float grenadeKnockbackArcHeight = 0.85f;
 
+    [SerializeField] private Animator animator;
+
+    private Animator stateMachineHostAnimator;
+    // Nearest neutral/player zone we are pathing toward for capture; null when idle or repicking
     private Zone currentTargetZone;
-    private Transform playerPoint;
+    // Wall-clock time when stun ends; compared in IsGrenadeStunActive.
+    private float grenadeStunEndTime;
+    private Coroutine grenadeKnockbackRoutine;
+    // After stun expires, clear IsStunned on the next LateUpdate so transition exit has a full frame to run.
+    private bool grenadeStunAnimatorClearPending;
 
     public float ChaseRange => chaseRange;
     public float AttackRange => attackRange;
     public float AttackRangeStop => attackRangeStop;
-
     public NavMeshAgent Agent => agent;
-
+    public Animator Animator => animator;
     public ZoneManager ZoneManager
     {
         get => zoneManager;
         set => zoneManager = value;
     }
-
     public Zone CurrentTargetZone => currentTargetZone;
+    public float ChaseHandoffDelay => chaseHandoffDelay;
+    // While true, IsStunned stays set and other animator SMBs stay blocked until the timer ends.
+    public bool IsGrenadeStunActive => grenadeStunEndTime > 0f && Time.time < grenadeStunEndTime;
+    // Grenade and cleanup always drive the same Animator that owns IsStunned in the active graph.
+    private Animator AnimatorForIsStunnedParam =>
+        stateMachineHostAnimator != null ? stateMachineHostAnimator : animator;
+
+
+    // Called from the enemy state machine prefab so IsStunned toggles match the layer with SMB transitions.
+    public void SetStateMachineHostAnimator(Animator host)
+    {
+        if (host != null)
+        {
+            stateMachineHostAnimator = host;
+        }
+    }
+
+    private void Awake()
+    {
+        if (agent == null)
+        {
+            agent = GetComponent<NavMeshAgent>();
+        }
+    }
 
     private void OnEnable()
     {
@@ -51,59 +86,57 @@ public class Enemy : MonoBehaviour
         {
             Active = null;
         }
+
+        CleanupGrenadeEffects();
     }
 
-    private void Awake()
+    private void LateUpdate()
     {
-        if (agent == null)
+        // Defer turning off IsStunned until after the animator has processed the end of the stun window.
+        if (!grenadeStunAnimatorClearPending || IsGrenadeStunActive)
         {
-            agent = GetComponent<NavMeshAgent>();
+            return;
         }
 
-        // NavMesh-driven enemies should not be shoved around by the player’s CharacterController / physics.
-        Rigidbody rb = GetComponent<Rigidbody>();
-        if (rb != null)
+        Animator stunAnimator = AnimatorForIsStunnedParam;
+        if (stunAnimator == null)
         {
-            rb.isKinematic = true;
-            rb.useGravity = false;
+            grenadeStunAnimatorClearPending = false;
+            return;
         }
+
+        stunAnimator.SetBool(IsStunnedAnimatorParam, false);
+        grenadeStunAnimatorClearPending = false;
     }
 
-    /// <summary>True if there is at least one neutral or player-owned zone the enemy can head toward.</summary>
-    public bool HasEnemyCaptureTargets()
+    // Called from OnDisable and when tearing down knockback so NavMesh sync and animator bools never leak across disable.
+    private void CleanupGrenadeEffects()
     {
-        if (zoneManager == null)
+        if (grenadeKnockbackRoutine != null)
         {
-            return false;
+            StopCoroutine(grenadeKnockbackRoutine);
+            grenadeKnockbackRoutine = null;
         }
 
-        return zoneManager.GetNearestEnemyTargetZone(transform.position) != null;
-    }
+        grenadeStunEndTime = 0f;
+        grenadeStunAnimatorClearPending = false;
 
-    private void Start()
-    {
-        if (zoneManager != null && zoneManager.MainCameraTransform != null)
+        Animator stunAnimator = AnimatorForIsStunnedParam;
+        if (stunAnimator != null)
         {
-            playerPoint = zoneManager.MainCameraTransform;
+            stunAnimator.SetBool(IsStunnedAnimatorParam, false);
         }
-        else
+
+        if (agent != null)
         {
-            GameObject playerObj = GameObject.FindGameObjectWithTag(PlayerTag);
-            if (playerObj != null)
-            {
-                Camera cam = playerObj.GetComponentInChildren<Camera>(true);
-                playerPoint = cam != null ? cam.transform : playerObj.transform;
-            }
-            else if (Camera.main != null)
-            {
-                playerPoint = Camera.main.transform;
-            }
+            agent.updatePosition = true;
+            agent.updateRotation = true;
         }
     }
 
-    /// <summary>
-    /// Same transform <see cref="ZoneManager"/> uses for capture/contest (AR main camera when assigned).
-    /// </summary>
+    // --- Player focus and horizontal distance (XZ only) ---
+
+    // Matches zone capture: ZoneManager’s AR camera when wired; otherwise the scene main camera.
     private Transform ResolvePlayerFocusTransform()
     {
         if (zoneManager != null && zoneManager.MainCameraTransform != null)
@@ -111,9 +144,10 @@ public class Enemy : MonoBehaviour
             return zoneManager.MainCameraTransform;
         }
 
-        return playerPoint;
+        return Camera.main.transform;
     }
 
+    // Ignores Y so slopes and camera height do not shrink or inflate chase and attack checks.
     private float HorizontalDistanceToPlayer()
     {
         Transform focus = ResolvePlayerFocusTransform();
@@ -122,11 +156,21 @@ public class Enemy : MonoBehaviour
             return float.PositiveInfinity;
         }
 
-        Vector3 enemyWorldPosition = transform.position;
-        Vector3 playerWorldPosition = focus.position;
-        float offsetOnXAxis = enemyWorldPosition.x - playerWorldPosition.x;
-        float offsetOnZAxis = enemyWorldPosition.z - playerWorldPosition.z;
-        return Mathf.Sqrt((offsetOnXAxis * offsetOnXAxis) + (offsetOnZAxis * offsetOnZAxis));
+        Vector3 delta = transform.position - focus.position;
+        delta.y = 0f;
+        return delta.magnitude;
+    }
+
+    // --- Zone queries (used by capture state machine and ZoneManager rules) ---
+
+    public bool HasEnemyCaptureTargets()
+    {
+        if (zoneManager == null)
+        {
+            return false;
+        }
+
+        return zoneManager.GetNearestEnemyTargetZone(transform.position) != null;
     }
 
     public Zone GetZoneUnderFoot()
@@ -155,11 +199,29 @@ public class Enemy : MonoBehaviour
         return zoneManager.GetZoneAtWorldPosition(focus.position);
     }
 
+    /// Player focus (AR camera) is on a tile currently marked
+    public bool IsPlayerOnContestedZone()
+    {
+        if (zoneManager == null)
+        {
+            return false;
+        }
+
+        Transform focus = ResolvePlayerFocusTransform();
+        if (focus == null)
+        {
+            return false;
+        }
+
+        return zoneManager.IsContestedZoneAtWorldPosition(focus.position);
+    }
+
     public bool IsZoneContestedWithPlayer()
     {
         Zone playerZone = GetPlayerZone();
         Zone enemyZone = GetZoneUnderFoot();
 
+        // True when both stand in the same cell; ZoneManager treats that as contested and pauses capture meters.
         return playerZone != null
             && enemyZone != null
             && playerZone == enemyZone;
@@ -167,7 +229,7 @@ public class Enemy : MonoBehaviour
 
     public bool IsInCapturableZone()
     {
-        // Same tile as the player is a contest — fight or chase, not capture dance.
+        // Same tile as the player is a contest — fight or chase, not capture.
         if (IsZoneContestedWithPlayer())
         {
             return false;
@@ -178,6 +240,7 @@ public class Enemy : MonoBehaviour
         return zone != null && ZoneManager.CanEnemyCapture(zone);
     }
 
+    // Tile shows Contested but player left: SMB can rotate out without sharing the cell anymore.
     public bool ShouldRotateFromContestedZone()
     {
         Zone enemyZone = GetZoneUnderFoot();
@@ -186,9 +249,11 @@ public class Enemy : MonoBehaviour
             && !IsZoneContestedWithPlayer();
     }
 
+    // Always chase during a shared-cell contest; otherwise chase only inside chaseRange on the horizontal plane.
     public bool ShouldChasePlayer()
     {
-        if (ResolvePlayerFocusTransform() == null)
+        Transform focus = ResolvePlayerFocusTransform();
+        if (focus == null)
         {
             return false;
         }
@@ -198,44 +263,59 @@ public class Enemy : MonoBehaviour
             return true;
         }
 
-        return HorizontalDistanceToPlayer() <= chaseRange;
+        Vector3 delta = transform.position - focus.position;
+        delta.y = 0f;
+        return delta.magnitude <= chaseRange;
     }
 
+    // Ghost players cannot be hit by kicks.
     public bool IsPlayerInAttackRange()
     {
-        if (HealthSystem.Instance != null && HealthSystem.Instance.IsGhost)
+        if (HealthSystem.Instance?.IsGhost == true)
         {
             return false;
         }
 
-        if (ResolvePlayerFocusTransform() == null)
+        Transform focus = ResolvePlayerFocusTransform();
+        if (focus == null)
         {
             return false;
         }
 
-        // XR / NavMesh: camera horizontal offset often stays outside a tight attackRange; attackRangeStop
-        // is the practical “start stomp” radius. Also respect agent stopping distance so we don’t require
-        // overlapping pivots.
-        float maxRange = Mathf.Max(attackRange, attackRangeStop) + attackEngagePadding;
+        float maxRange = Mathf.Max(attackRange, attackRangeStop);
         if (agent != null)
         {
             maxRange = Mathf.Max(maxRange, agent.stoppingDistance + 0.2f);
         }
 
-        return HorizontalDistanceToPlayer() <= maxRange;
+        Vector3 delta = transform.position - focus.position;
+        delta.y = 0f;
+        return delta.magnitude <= maxRange;
     }
 
+    // NavMesh movement stop
     public void StopMovement()
     {
+        if (agent == null)
+        {
+            return;
+        }
+
         agent.isStopped = true;
     }
 
+    // NavMesh movement resume
     public void ResumeMovement()
     {
+        if (agent == null || IsGrenadeStunActive)
+        {
+            return;
+        }
+
         agent.isStopped = false;
     }
 
-    /// <summary>Stops the agent and drops the current path so it does not keep sliding from a stale tangent.</summary>
+    // Hard stop plus ResetPath: avoids sliding toward an old corner after state changes.
     public void StopAndClearNavPath()
     {
         if (agent == null)
@@ -247,42 +327,7 @@ public class Enemy : MonoBehaviour
         agent.ResetPath();
     }
 
-    /// <summary>
-    /// Kinematic NavMesh agents ignore <see cref="Rigidbody.AddExplosionForce"/>; shove using the navmesh instead.
-    /// </summary>
-    public void ApplyGrenadeKnockback(Vector3 explosionCenter, float radius, float force)
-    {
-        if (agent == null || !agent.enabled || !agent.isOnNavMesh)
-        {
-            return;
-        }
-
-        Vector3 delta = transform.position - explosionCenter;
-        delta.y = 0f;
-        float dist = delta.magnitude;
-        if (dist < 0.02f || dist > radius)
-        {
-            return;
-        }
-
-        float falloff = 1f - (dist / radius);
-        Vector3 push = delta.normalized * (force * falloff * grenadeKnockbackDistancePerForce);
-        if (push.sqrMagnitude < 1e-8f)
-        {
-            return;
-        }
-
-        Vector3 candidate = transform.position + push;
-        float sampleMaxDistance = Mathf.Max(push.magnitude + 1.5f, agent.height);
-        if (!NavMesh.SamplePosition(candidate, out NavMeshHit hit, sampleMaxDistance, NavMesh.AllAreas))
-        {
-            return;
-        }
-
-        agent.Warp(hit.position);
-    }
-
-    /// <summary>Instant horizontal face toward the player / camera focus used for chase and contest.</summary>
+    // Instant yaw toward focus; disables agent rotation so root rotation stays locked during the blend.
     public void FaceTowardPlayer()
     {
         if (agent != null)
@@ -298,7 +343,8 @@ public class Enemy : MonoBehaviour
 
         Vector3 flat = focus.position - transform.position;
         flat.y = 0f;
-        if (flat.sqrMagnitude < 1e-6f)
+        const float minLookDirectionDistance = 0.01f;
+        if (flat.sqrMagnitude < minLookDirectionDistance * minLookDirectionDistance)
         {
             return;
         }
@@ -306,6 +352,7 @@ public class Enemy : MonoBehaviour
         transform.rotation = Quaternion.LookRotation(flat.normalized, Vector3.up);
     }
 
+    // Pick nearest capturable zone and path to a random point inside; clears path if nothing is left to take.
     public void FindAndMoveToZone()
     {
         if (zoneManager == null || agent == null)
@@ -323,8 +370,14 @@ public class Enemy : MonoBehaviour
         agent.SetDestination(currentTargetZone.GetRandomWorldPointInside());
     }
 
+    // Raw world position of the focus; caller should ensure chase state is appropriate.
     public void SetChaseDestinationToPlayer()
     {
+        if (agent == null)
+        {
+            return;
+        }
+
         Transform focus = ResolvePlayerFocusTransform();
         if (focus == null)
         {
@@ -334,11 +387,18 @@ public class Enemy : MonoBehaviour
         agent.SetDestination(focus.position);
     }
 
+    // Typical "arrived" check for capture patrol: valid path, not repathing, within stopping distance.
     public bool HasReachedZone()
     {
+        if (agent == null)
+        {
+            return false;
+        }
+
         return agent.hasPath && !agent.pathPending && agent.remainingDistance <= agent.stoppingDistance;
     }
 
+    // Repick when we have no target, the tile flipped to non-capturable, or we finished the current path.
     public bool ShouldChooseNewZone()
     {
         if (currentTargetZone == null)
@@ -354,13 +414,121 @@ public class Enemy : MonoBehaviour
         return HasReachedZone();
     }
 
+    // Mirrors ZoneManager.CanEnemyCapture: neutral or player-owned cells only.
     private bool IsPatrolZoneStillValid(Zone zone)
     {
         return ZoneManager.CanEnemyCapture(zone);
     }
 
+    // --- Grenade reaction ---
+
+    // Kinematic rigidbody ignores AddExplosionForce: horizontal push scaled by falloff, NavMesh snap, parabolic arc, then stun window.
+    public void ApplyGrenadeKnockback(Vector3 explosionCenter, float blastRadius, float explosionForce)
+    {
+        if (agent == null || !agent.enabled || !agent.isOnNavMesh)
+        {
+            return;
+        }
+
+        const float minHorizontalDistance = 0.02f;
+
+        Vector3 flatOffset = transform.position - explosionCenter;
+        flatOffset.y = 0f;
+
+        float horizontalDistance = flatOffset.magnitude;
+        if (horizontalDistance < minHorizontalDistance || horizontalDistance > blastRadius)
+        {
+            return;
+        }
+
+        // 1 at the blast center, 0 at blastRadius.
+        float distanceFalloff = 1f - (horizontalDistance / blastRadius);
+        Vector3 knockbackDirection = flatOffset / horizontalDistance;
+        float knockbackLength = explosionForce * distanceFalloff * grenadeKnockbackDistancePerForce;
+        Vector3 horizontalKnockback = knockbackDirection * knockbackLength;
+        const float minKnockbackDistance = 0.01f;
+        if (horizontalKnockback.sqrMagnitude < minKnockbackDistance * minKnockbackDistance)
+        {
+            return;
+        }
+
+        Vector3 unsnappedDestination = transform.position + horizontalKnockback;
+        float navMeshSearchRadius = Mathf.Max(horizontalKnockback.magnitude + 1.5f, agent.height);
+        if (!NavMesh.SamplePosition(unsnappedDestination, out NavMeshHit navHit, navMeshSearchRadius, NavMesh.AllAreas))
+        {
+            return;
+        }
+
+        float stunDuration = Mathf.Max(0.02f, grenadeStunDuration);
+        grenadeStunEndTime = Time.time + stunDuration;
+        grenadeStunAnimatorClearPending = true;
+
+        Animator animatorForStun = AnimatorForIsStunnedParam;
+        if (animatorForStun != null)
+        {
+            animatorForStun.SetBool(IsStunnedAnimatorParam, true);
+        }
+
+        agent.isStopped = true;
+        agent.ResetPath();
+
+        if (grenadeKnockbackRoutine != null)
+        {
+            StopCoroutine(grenadeKnockbackRoutine);
+        }
+
+        grenadeKnockbackRoutine = StartCoroutine(GrenadeKnockbackArcRoutine(navHit.position));
+    }
+
+    // Manually move the transform for the arc; agent Warp at the end resyncs internal NavMesh position.
+    private IEnumerator GrenadeKnockbackArcRoutine(Vector3 landPosition)
+    {
+        const float minArcDuration = 0.05f;
+
+        if (agent == null)
+        {
+            grenadeKnockbackRoutine = null;
+            yield break;
+        }
+
+        agent.isStopped = true;
+        // Prevent the agent from fighting the coroutine-driven root motion for the duration of the arc.
+        agent.updatePosition = false;
+        agent.updateRotation = false;
+
+        Vector3 arcStart = transform.position;
+        float arcDuration = Mathf.Max(minArcDuration, grenadeKnockbackArcDuration);
+        float peakHeight = grenadeKnockbackArcHeight;
+        float elapsedTime = 0f;
+
+        while (elapsedTime < arcDuration)
+        {
+            elapsedTime += Time.deltaTime;
+            float arcProgress = Mathf.Clamp01(elapsedTime / arcDuration);
+            
+            // Parabola peak at arcProgress=0.5: 4*t*(1-t) lift in world units.
+            float parabolaLift = 4f * peakHeight * arcProgress * (1f - arcProgress);
+
+            Vector3 positionOnArc = Vector3.Lerp(arcStart, landPosition, arcProgress);
+            positionOnArc.y = Mathf.Lerp(arcStart.y, landPosition.y, arcProgress) + parabolaLift;
+            transform.position = positionOnArc;
+            
+            yield return null;
+        }
+
+        transform.position = landPosition;
+        // Warp the agent to the land position (Warp is more accurate than MovePosition)
+        agent.Warp(landPosition);
+        agent.updatePosition = true;
+        agent.updateRotation = true;
+        agent.isStopped = true;
+
+        grenadeKnockbackRoutine = null;
+    }
+
     private void OnDrawGizmos()
     {
+        // Red: chase radius. Blue / green: inner and outer attack tuning spheres (see IsPlayerInAttackRange).
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, chaseRange);
         Gizmos.color = Color.blue;

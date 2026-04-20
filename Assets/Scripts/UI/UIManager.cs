@@ -77,9 +77,18 @@ public class UIManager : MonoBehaviour
 
     private void LoadMatchDurationFromPlayerPrefs()
     {
-        matchDurationSeconds = Mathf.Max(
-            0f,
-            PlayerPrefs.GetInt(PP_GAME_TIME, Mathf.RoundToInt(matchDurationSeconds)));
+        int loaded = PlayerPrefs.GetInt(
+            PP_GAME_TIME,
+            Mathf.RoundToInt(matchDurationSeconds));
+        int clamped = Mathf.Clamp(
+            loaded,
+            ConfigPopup.MinMatchDurationSeconds,
+            ConfigPopup.MaxMatchDurationSeconds);
+        matchDurationSeconds = clamped;
+        if (clamped != loaded)
+        {
+            SaveMatchDurationPrefs();
+        }
     }
 
     private void SaveMatchDurationPrefs()
@@ -103,24 +112,14 @@ public class UIManager : MonoBehaviour
             return;
         }
 
-        if (IsUntimedMode())
+        timeRemaining -= Time.deltaTime;
+        if (timeRemaining <= 0f)
         {
-            if (AreAllZonesOwned())
-            {
-                EndMatchAndBroadcastResult();
-            }
+            timeRemaining = 0f;
+            EndMatchAndBroadcastResult();
         }
-        else
-        {
-            timeRemaining -= Time.deltaTime;
-            if (timeRemaining <= 0f)
-            {
-                timeRemaining = 0f;
-                EndMatchAndBroadcastResult();
-            }
 
-            UpdateTimerLabel(timeRemaining);
-        }
+        UpdateTimerLabel(timeRemaining);
     }
 
     private void OnPopupOpened()
@@ -171,7 +170,10 @@ public class UIManager : MonoBehaviour
 
     public void SetMatchDurationSeconds(float value)
     {
-        matchDurationSeconds = Mathf.Max(0f, value);
+        matchDurationSeconds = Mathf.Clamp(
+            value,
+            ConfigPopup.MinMatchDurationSeconds,
+            ConfigPopup.MaxMatchDurationSeconds);
 
         if (!isMatchRunning)
         {
@@ -179,14 +181,7 @@ public class UIManager : MonoBehaviour
             return;
         }
 
-        if (IsUntimedMode())
-        {
-            timeRemaining = 0f;
-            UpdateTimerLabel(timeRemaining);
-            return;
-        }
-
-        timeRemaining = Mathf.Max(0f, matchDurationSeconds);
+        timeRemaining = matchDurationSeconds;
         UpdateTimerLabel(timeRemaining);
     }
 
@@ -262,34 +257,10 @@ public class UIManager : MonoBehaviour
 
     private void UpdateTimerLabel(float remainingSeconds)
     {
-  
         int secondsRemaining = Mathf.CeilToInt(Mathf.Max(0f, remainingSeconds));
         int minutes = secondsRemaining / 60;
         int seconds = secondsRemaining % 60;
         timerText.text = $"{minutes}:{seconds:00}";
-    }
-
-    private bool IsUntimedMode()
-    {
-        return Mathf.Approximately(matchDurationSeconds, 0f);
-    }
-
-    private bool AreAllZonesOwned()
-    {
-        if (zoneManager.zones.Count == 0)
-        {
-            return false;
-        }
-
-        foreach (Zone zone in zoneManager.zones)
-        {
-            if (zone.Owner != ZoneManager.ZoneOwner.Player && zone.Owner != ZoneManager.ZoneOwner.Enemy)
-            {
-                return false;
-            }
-        }
-
-        return true;
     }
 
     private void EndMatchAndBroadcastResult()

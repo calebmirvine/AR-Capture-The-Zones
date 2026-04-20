@@ -4,12 +4,14 @@ public class EnemyChaseState : EnemyStateMachineBehaviour
 {
     private bool captureRequested;
     private bool nonChaseHandoffTriggered;
+    private float chaseInvalidSince = -1f;
 
     public override void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
         base.OnStateEnter(animator, stateInfo, layerIndex);
         captureRequested = false;
         nonChaseHandoffTriggered = false;
+        chaseInvalidSince = -1f;
         animator.SetBool(CapturingParam, false);
 
         enemy.FaceTowardPlayer();
@@ -20,6 +22,11 @@ public class EnemyChaseState : EnemyStateMachineBehaviour
 
     public override void OnStateUpdate(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
+        if (BlockStateWhenGrenadeStunned(animator))
+        {
+            return;
+        }
+
         enemy.FaceTowardPlayer();
 
         if (TryTriggerAttackIfInRange(animator))
@@ -41,6 +48,20 @@ public class EnemyChaseState : EnemyStateMachineBehaviour
 
         if (!enemy.ShouldChasePlayer())
         {
+            if (chaseInvalidSince < 0f)
+            {
+                chaseInvalidSince = Time.time;
+            }
+
+            float handoffDelay = enemy.ChaseHandoffDelay;
+            if (handoffDelay > 0f && Time.time - chaseInvalidSince < handoffDelay)
+            {
+                enemy.SetChaseDestinationToPlayer();
+                animator.SetFloat(SpeedParam, agent.velocity.magnitude);
+                animator.SetBool(CapturingParam, false);
+                return;
+            }
+
             if (!nonChaseHandoffTriggered)
             {
                 nonChaseHandoffTriggered = true;
@@ -59,6 +80,7 @@ public class EnemyChaseState : EnemyStateMachineBehaviour
             return;
         }
 
+        chaseInvalidSince = -1f;
         nonChaseHandoffTriggered = false;
         enemy.SetChaseDestinationToPlayer();
         animator.SetFloat(SpeedParam, agent.velocity.magnitude);

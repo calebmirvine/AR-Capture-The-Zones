@@ -17,13 +17,13 @@ public class PlayerHealthUI : MonoBehaviour
             healthSystem = FindAnyObjectByType<HealthSystem>();
         }
 
-        healthSystem.OnHealthChanged += UpdateHealth;
+        Messenger<float>.AddListener(GameEvent.PLAYER_HEALTH_CHANGED, UpdateHealth);
         UpdateHealth(healthSystem.HealthNormalized);
     }
 
     private void OnDisable()
     {
-        healthSystem.OnHealthChanged -= UpdateHealth;
+        Messenger<float>.RemoveListener(GameEvent.PLAYER_HEALTH_CHANGED, UpdateHealth);
     }
 
     private void Update()

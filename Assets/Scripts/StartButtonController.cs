@@ -126,7 +126,7 @@ public class StartButtonController : MonoBehaviour
 
     private void PlayNavigationSfx()
     {
-        SoundManager.Instance.PlaySfx(SoundLibrary.Instance.MenuNavSfx);
+        SoundManager.Instance.PlayOneShot(SoundLibrary.Instance.MenuNavSfx);
     }
 
     private void SetConfirmButtonVisible(bool visible)
