@@ -5,7 +5,10 @@ AR Capture The Zones is an augmented reality game built with Unity and AR Founda
 Players use their device to map their environment, after which the game dynamically anchors capture zones to the physical floor. To capture a zone, players must physically navigate their real-world environment and hold their position within the augmented zone boundaries.
 
 ## 🎥 Demo
-[Watch the Gameplay Demo](https://www.youtube.com/watch?v=LVPtyxqMTok)
+
+[![AR Capture The Zones Gameplay Demo](https://img.youtube.com/vi/LVPtyxqMTok/maxresdefault.jpg)](https://www.youtube.com/watch?v=LVPtyxqMTok)
+
+*Click the image above to watch the gameplay demo.*
 
 ## ⚙️ Technical Features
 
